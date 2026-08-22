@@ -3,6 +3,10 @@
 > **"Every workday, perfectly aligned."**  
 > *A role-based, multi-tenant SaaS HRMS built around an interconnected operational pipeline.*
 
+> [!NOTE]
+> 📽️ **Demo Video**: [Watch Demo Video on YouTube](https://youtu.be/uKkkqM4Yhj0)  
+> *(Note: The previous YouTube link was removed. Please use this link for now until the original link is restored.)*
+
 ---
 
 ## 🌟 Overview
