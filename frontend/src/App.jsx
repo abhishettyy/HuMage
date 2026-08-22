@@ -53,11 +53,10 @@ export default function App() {
     setEmployees((prev) =>
       prev.map((e) =>
         e.name === "Meera Nair"
-          ? { ...e, status: STATUS.BOARDING, checkIn: timeStr }
+          ? { ...e, status: STATUS.PRESENT, checkIn: timeStr }
           : e
       )
     );
-
     // Add to attendance log table
     setAttendanceRecords((prev) => [
       {
@@ -72,7 +71,7 @@ export default function App() {
       ...prev,
     ]);
 
-    showToast("Checked In", `Check-in recorded at ${timeStr}. Flight status set to Boarding.`);
+    showToast("Checked In", `Check-in recorded at ${timeStr}. Status set to Present.`);
   };
 
   const handleCheckOut = async () => {
@@ -104,7 +103,7 @@ export default function App() {
     // Update employee status to In Transit
     if (req) {
       setEmployees((prev) =>
-        prev.map((e) => (e.id === req.employeeId ? { ...e, status: STATUS.IN_TRANSIT } : e))
+        prev.map((e) => (e.id === req.employeeId ? { ...e, status: STATUS.ON_LEAVE } : e))
       );
       showToast(
         "Leave Approved & Pipeline Updated",

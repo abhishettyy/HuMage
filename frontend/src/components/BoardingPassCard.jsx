@@ -9,16 +9,13 @@ const RAMP_TINT_CLASSES = {
 
 // UI-DESIGN.md §5.1 — Boarding-Pass Employee Card
 export default function BoardingPassCard({ employee, onClick }) {
-  const meta = STATUS_META[employee.status] || STATUS_META[STATUS.GROUNDED];
-  const isAtRisk = employee.status === STATUS.DELAYED;
+  const meta = STATUS_META[employee.status] || STATUS_META[STATUS.ABSENT];
 
   return (
     <button
       onClick={onClick}
       className={`relative w-full text-left rounded-xl border overflow-hidden transition-all duration-200 shadow-sm hover:shadow ${RAMP_TINT_CLASSES[meta.ramp]}`}
     >
-      {/* Corner Status Dot */}
-      <div className={`absolute top-2.5 right-2.5 w-2 h-2 rounded-full ${meta.ramp === "teal" ? "bg-teal-500" : (meta.ramp === "amber" ? "bg-amber-500" : "bg-slate-400")}`}></div>
 
       <div className="flex items-start justify-between p-4">
         <div className="flex items-center gap-3">
@@ -36,14 +33,14 @@ export default function BoardingPassCard({ employee, onClick }) {
         </div>
 
         <div className="flex flex-col items-end gap-1">
-          <i className={`ti ${meta.icon} text-lg text-slate-700`} aria-hidden="true"></i>
-          {isAtRisk && (
-            <span
-              className="text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded flex items-center gap-1"
-              title="At Risk: Absent without approved time-off"
-            >
-              <i className="ti ti-alert-triangle text-amber-700" aria-hidden="true"></i> At Risk
-            </span>
+          {employee.status === STATUS.PRESENT && (
+            <img src="/assets/status-dot-green.svg" alt="Present" className="w-5 h-5 drop-shadow-sm mt-1 mr-1" />
+          )}
+          {employee.status === STATUS.ABSENT && (
+            <img src="/assets/status-dot-yellow.svg" alt="Absent" className="w-5 h-5 drop-shadow-sm mt-1 mr-1" />
+          )}
+          {employee.status === STATUS.ON_LEAVE && (
+            <img src="/assets/plane.svg" alt="On Leave" className="w-5 h-5 drop-shadow-sm mt-1 mr-1" />
           )}
         </div>
       </div>

@@ -34,7 +34,7 @@ export default function NewEmployeeModal({ currentEmployeeCount, onSubmit, onClo
       mobile,
       location,
       joiningDate,
-      status: STATUS.GROUNDED,
+      status: STATUS.ABSENT,
       checkIn: null,
       checkOut: null,
       wage: Number(wage) || 50000,

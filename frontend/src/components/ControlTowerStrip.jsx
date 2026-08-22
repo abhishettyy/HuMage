@@ -5,17 +5,15 @@ import { STATUS } from "../data/mockData";
 // the boarding-pass cards, not the summary.
 export default function ControlTowerStrip({ employees }) {
   const counts = {
-    inFlight: employees.filter((e) => e.status === STATUS.BOARDING).length,
-    inTransit: employees.filter((e) => e.status === STATUS.IN_TRANSIT).length,
-    grounded: employees.filter(
-      (e) => e.status === STATUS.DELAYED || e.status === STATUS.GROUNDED
-    ).length,
+    present: employees.filter((e) => e.status === STATUS.PRESENT).length,
+    onLeave: employees.filter((e) => e.status === STATUS.ON_LEAVE).length,
+    absent: employees.filter((e) => e.status === STATUS.ABSENT).length,
   };
 
   const metrics = [
-    { label: "In flight", value: counts.inFlight },
-    { label: "In transit (leave)", value: counts.inTransit },
-    { label: "Grounded / delayed", value: counts.grounded },
+    { label: "Present", value: counts.present },
+    { label: "On leave", value: counts.onLeave },
+    { label: "Absent", value: counts.absent },
   ];
 
   return (

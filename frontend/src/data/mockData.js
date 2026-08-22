@@ -2,17 +2,15 @@
 // Matches PS_Updated.md, UI-DESIGN.md, and TASKS_UPDATED.md requirements.
 
 export const STATUS = {
-  BOARDING: "boarding", // checked in / present
-  DELAYED: "delayed", // absent, no approved leave
-  IN_TRANSIT: "in_transit", // approved leave, active today
-  GROUNDED: "grounded", // not yet checked in, day not started
+  PRESENT: "present", // checked in / present
+  ABSENT: "absent", // absent, no approved leave
+  ON_LEAVE: "on_leave", // approved leave, active today
 };
 
 export const STATUS_META = {
-  [STATUS.BOARDING]: { label: "Boarding", ramp: "teal", icon: "ti-plane-departure" },
-  [STATUS.DELAYED]: { label: "Delayed", ramp: "amber", icon: "ti-alert-circle" },
-  [STATUS.IN_TRANSIT]: { label: "In transit", ramp: "slate", icon: "ti-plane" },
-  [STATUS.GROUNDED]: { label: "Grounded", ramp: "slate", icon: "ti-clock" },
+  [STATUS.PRESENT]: { label: "Present", ramp: "teal" },
+  [STATUS.ABSENT]: { label: "Absent", ramp: "amber" },
+  [STATUS.ON_LEAVE]: { label: "On Leave", ramp: "slate" },
 };
 
 export const initialEmployees = [
@@ -28,7 +26,7 @@ export const initialEmployees = [
     mobile: "+91 98765 43210",
     location: "Bengaluru",
     joiningDate: "2024-03-11",
-    status: STATUS.BOARDING,
+    status: STATUS.PRESENT,
     checkIn: "09:58",
     checkOut: null,
     wage: 50000,
@@ -73,7 +71,7 @@ export const initialEmployees = [
     mobile: "+91 91234 56789",
     location: "Bengaluru",
     joiningDate: "2023-06-01",
-    status: STATUS.DELAYED,
+    status: STATUS.ABSENT,
     checkIn: null,
     checkOut: null,
     wage: 75000,
@@ -116,7 +114,7 @@ export const initialEmployees = [
     mobile: "+91 99887 76655",
     location: "Bengaluru",
     joiningDate: "2022-01-10",
-    status: STATUS.IN_TRANSIT,
+    status: STATUS.ON_LEAVE,
     checkIn: null,
     checkOut: null,
     wage: 60000,
@@ -159,7 +157,7 @@ export const initialEmployees = [
     mobile: "+91 90909 09090",
     location: "Pune",
     joiningDate: "2025-02-18",
-    status: STATUS.GROUNDED,
+    status: STATUS.ABSENT,
     checkIn: null,
     checkOut: null,
     wage: 55000,

@@ -49,7 +49,7 @@ export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, on
             className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-700 relative transition-colors focus:outline-none focus:ring-2 focus:ring-teal-200"
           >
             {role === "admin" ? "AD" : "MN"}
-            <span className={`absolute top-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${employee?.status === "boarding" ? "bg-teal-500" : (employee?.status === "in_transit" ? "bg-slate-400" : "bg-amber-500")}`}></span>
+            <span className={`absolute top-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${employee?.status === "present" ? "bg-teal-500" : (employee?.status === "on_leave" ? "bg-slate-400" : "bg-amber-500")}`}></span>
           </button>
 
           {dropdownOpen && (
