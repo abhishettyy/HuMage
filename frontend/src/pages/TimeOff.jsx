@@ -15,8 +15,15 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
     e.preventDefault();
     if (!startDate || !endDate) return;
 
-    const startFormatted = new Date(startDate).toLocaleDateString("en-GB");
-    const endFormatted = new Date(endDate).toLocaleDateString("en-GB");
+    const startObj = new Date(startDate);
+    const endObj = new Date(endDate);
+    
+    // Dynamic calculation of leave days between start and end date inclusive
+    const diffTime = Math.abs(endObj - startObj);
+    const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+
+    const startFormatted = startObj.toLocaleDateString("en-GB");
+    const endFormatted = endObj.toLocaleDateString("en-GB");
 
     const newReq = {
       id: Date.now(),
@@ -24,7 +31,7 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
       name: "Meera Nair",
       start: startFormatted,
       end: endFormatted,
-      days: 2,
+      days: diffDays,
       type: leaveType,
       status: "Pending",
     };
@@ -51,7 +58,7 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
         {role !== "admin" && (
           <button
             onClick={() => setShowNew(true)}
-            className="text-xs font-medium px-3.5 py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 shadow-sm transition-colors flex items-center gap-1.5"
+            className="text-xs font-medium px-3.5 py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <i className="ti ti-plane-arrival text-sm" aria-hidden="true"></i>
             + New request
@@ -85,10 +92,10 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
 
       {showNew && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-sm bg-white rounded-xl shadow-2xl p-6 border border-slate-200">
+          <div className="w-full max-w-sm bg-white rounded-xl shadow-2xl p-6 border border-slate-200 animate-pop-in">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
               <h2 className="text-base font-semibold text-slate-900">Request Time Off</h2>
-              <button onClick={() => setShowNew(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setShowNew(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <i className="ti ti-x text-lg" aria-hidden="true"></i>
               </button>
             </div>
@@ -99,7 +106,7 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
                 <select
                   value={leaveType}
                   onChange={(e) => setLeaveType(e.target.value)}
-                  className="w-full border border-slate-200 rounded-md px-3 py-2 text-xs"
+                  className="w-full border border-slate-200 rounded-md px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-teal-200"
                 >
                   <option>Paid time off</option>
                   <option>Sick leave</option>
@@ -115,7 +122,7 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs"
+                    className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-teal-200"
                   />
                 </div>
                 <div>
@@ -125,7 +132,7 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
                     required
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs"
+                    className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-teal-200"
                   />
                 </div>
               </div>
@@ -146,14 +153,14 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
               <div className="flex gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="submit"
-                  className="flex-1 text-xs font-medium py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+                  className="flex-1 text-xs font-medium py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition-colors cursor-pointer"
                 >
                   Submit Request
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowNew(false)}
-                  className="flex-1 text-xs font-medium py-2 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+                  className="flex-1 text-xs font-medium py-2 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   Discard
                 </button>
