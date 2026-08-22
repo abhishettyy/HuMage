@@ -1,0 +1,184 @@
+@import "tailwindcss";
+
+/*
+ * Dayflow "Flight Deck" design system.
+ * Two-accent rule (UI-DESIGN.md §3): teal = boarding/positive, amber = delayed/warning,
+ * warm slate = structure, danger red = destructive actions only.
+ */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* Primary accent — boarding / active */
+  --color-teal-50: #e1f5ee;
+  --color-teal-100: #9fe1cb;
+  --color-teal-200: #5dcaa5;
+  --color-teal-300: #3eb58e;
+  --color-teal-400: #1d9e75;
+  --color-teal-500: #148a66;
+  --color-teal-600: #0f6e56;
+  --color-teal-700: #0c5f4b;
+  --color-teal-800: #085041;
+  --color-teal-900: #04342c;
+  --color-teal-950: #02241e;
+
+  /* Warning accent — delayed / pending */
+  --color-amber-50: #faeeda;
+  --color-amber-100: #fac775;
+  --color-amber-200: #ef9f27;
+  --color-amber-300: #e08a1e;
+  --color-amber-400: #ba7517;
+  --color-amber-500: #a16314;
+  --color-amber-600: #854f0b;
+  --color-amber-700: #744408;
+  --color-amber-800: #633806;
+  --color-amber-900: #412402;
+  --color-amber-950: #2b1802;
+
+  /* Neutral structure — warm slate */
+  --color-slate-50: #f1efe8;
+  --color-slate-100: #d3d1c7;
+  --color-slate-200: #b4b2a9;
+  --color-slate-300: #9e9c93;
+  --color-slate-400: #888780;
+  --color-slate-500: #75736b;
+  --color-slate-600: #5f5e5a;
+  --color-slate-700: #51504b;
+  --color-slate-800: #444441;
+  --color-slate-900: #2c2c2a;
+  --color-slate-950: #1b1b19;
+
+  /* Destructive only */
+  --color-danger-50: #fcebeb;
+  --color-danger-100: #f7c8c8;
+  --color-danger-200: #f09595;
+  --color-danger-600: #a32d2d;
+  --color-danger-800: #791f1f;
+
+  /* Page surface */
+  --color-cream: #f7f6f2;
+
+  --shadow-card: 0 1px 2px rgb(44 44 42 / 0.05), 0 1px 3px rgb(44 44 42 / 0.06);
+  --shadow-lifted: 0 4px 10px -2px rgb(44 44 42 / 0.1), 0 12px 28px -8px rgb(44 44 42 / 0.14);
+  --shadow-modal: 0 24px 64px -12px rgb(27 27 25 / 0.35);
+
+  --animate-fade-up: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.25s ease-out both;
+  --animate-toast-in: toast-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pop-in: pop-in 0.28s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  --animate-taxi: taxi 2.4s ease-in-out infinite;
+  --animate-dash-crawl: dash-crawl 1.2s linear infinite;
+  --animate-soft-pulse: soft-pulse 2s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(24px) translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateX(0) translateY(0) scale(1); }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes taxi {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px); }
+}
+@keyframes dash-crawl {
+  to { background-position-x: 24px; }
+}
+@keyframes soft-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-slate-100);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-slate-900);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--color-teal-100);
+    color: var(--color-teal-900);
+  }
+  input[type="range"] {
+    accent-color: var(--color-teal-600);
+  }
+}
+
+/* Boarding-pass perforation divider */
+@utility perforation {
+  border-top: 1.5px dashed var(--color-slate-200);
+  position: relative;
+}
+
+/* Runway track with crawling centerline while "in flight" */
+@utility runway-track {
+  background-color: var(--color-slate-100);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--color-slate-200) 0 10px,
+    transparent 10px 24px
+  );
+  background-position-x: 0;
+}
+@utility runway-track-live {
+  background-color: var(--color-teal-100);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--color-teal-400) 0 10px,
+    transparent 10px 24px
+  );
+  animation: dash-crawl 1.2s linear infinite;
+}
+
+/* Boarding-pass barcode strip */
+@utility barcode {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--color-slate-800) 0 1.5px,
+    transparent 1.5px 3px,
+    var(--color-slate-800) 3px 4px,
+    transparent 4px 7px,
+    var(--color-slate-800) 7px 9.5px,
+    transparent 9.5px 12px
+  );
+}
+
+/* Printable payslip: hide the app shell, print only the receipt */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #payslip-print,
+  #payslip-print * {
+    visibility: visible;
+  }
+  #payslip-print {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    border: none;
+    box-shadow: none;
+  }
+  .payslip-no-print {
+    display: none !important;
+  }
+}
