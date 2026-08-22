@@ -73,39 +73,42 @@ export default function Dashboard({ role, isSuperAdmin, employees, onSelectEmplo
         ))}
       </div>
 
-      {/* Flight Status Definitions & Legend Box */}
+      {/* Flight Status Definitions & Legend Box with SVG Icons */}
       <div className="mt-8 bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs">
-        <h3 className="font-semibold text-slate-800 uppercase tracking-wider mb-2.5 flex items-center gap-1.5 text-[11px]">
+        <h3 className="font-semibold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-1.5 text-[11px]">
           <i className="ti ti-info-circle text-teal-600 text-sm" aria-hidden="true"></i>
           Flight Status Guide & Meanings:
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-slate-600">
-          <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-start gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0 mt-1"></span>
+          <div className="bg-white p-3 rounded-lg border border-slate-200 flex items-start gap-2.5 shadow-2xs">
+            <img src="/assets/status-dot-green.svg" alt="Green Dot" className="w-5 h-5 shrink-0 mt-0.5" />
             <div>
-              <strong className="text-slate-900 block">Boarding (Present)</strong>
-              <span className="text-[11px]">Checked in & working on site/remote today.</span>
+              <strong className="text-slate-900 block text-xs">Boarding (Present)</strong>
+              <span className="text-[11px] text-slate-500">Checked in & active on site/remote today.</span>
             </div>
           </div>
-          <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-start gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0 mt-1"></span>
+
+          <div className="bg-white p-3 rounded-lg border border-slate-200 flex items-start gap-2.5 shadow-2xs">
+            <img src="/assets/plane.svg" alt="Plane" className="w-5 h-5 shrink-0 mt-0.5" />
             <div>
-              <strong className="text-slate-900 block">In Transit (On Leave)</strong>
-              <span className="text-[11px]">On approved paid, sick, or unpaid leave.</span>
+              <strong className="text-slate-900 block text-xs">In Transit (On Leave)</strong>
+              <span className="text-[11px] text-slate-500">On approved paid, sick, or unpaid leave.</span>
             </div>
           </div>
-          <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-start gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 mt-1"></span>
+
+          <div className="bg-white p-3 rounded-lg border border-slate-200 flex items-start gap-2.5 shadow-2xs">
+            <img src="/assets/status-dot-yellow.svg" alt="Yellow Dot" className="w-5 h-5 shrink-0 mt-0.5" />
             <div>
-              <strong className="text-slate-900 block">Delayed (At Risk)</strong>
-              <span className="text-[11px]">Not checked in yet today by shift time.</span>
+              <strong className="text-slate-900 block text-xs">Delayed (At Risk)</strong>
+              <span className="text-[11px] text-slate-500">Not checked in yet today by shift time.</span>
             </div>
           </div>
-          <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-start gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0 mt-1"></span>
+
+          <div className="bg-white p-3 rounded-lg border border-slate-200 flex items-start gap-2.5 shadow-2xs">
+            <img src="/assets/status-dot-red.svg" alt="Red Dot" className="w-5 h-5 shrink-0 mt-0.5" />
             <div>
-              <strong className="text-slate-900 block">Grounded (Off-Duty)</strong>
-              <span className="text-[11px]">Off shift, weekend rest, or inactive.</span>
+              <strong className="text-slate-900 block text-xs">Grounded (Off-Duty)</strong>
+              <span className="text-[11px] text-slate-500">Off shift, weekend rest, or inactive.</span>
             </div>
           </div>
         </div>
