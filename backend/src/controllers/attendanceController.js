@@ -160,6 +160,37 @@ export const getAttendanceSummary = async (req, res) => {
 };
 
 /**
+ * @route   GET /api/attendance/at-risk
+ * @desc    PS_Updated.md §9 Differentiator #4: Rule-based "At Risk" attendance flag (>= 3 unexplained absent days)
+ * @access  Private
+ */
+export const getAtRiskEmployees = async (req, res) => {
+  try {
+    const totalWorkingDays = 22;
+
+    const result = await query(
+      `SELECT e.id as employee_id, e.emp_code, e.name, e.department, e.job_position,
+              COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) as absent_days
+       FROM employees e
+       LEFT JOIN attendance a ON a.employee_id = e.id
+       GROUP BY e.id, e.emp_code, e.name, e.department, e.job_position
+       HAVING COUNT(CASE WHEN a.status = 'ABSENT' THEN 1 END) >= 3`
+    );
+
+    res.json({
+      atRiskEmployees: result.rows.map(r => ({
+        ...r,
+        absent_days: Number(r.absent_days),
+        riskLevel: Number(r.absent_days) >= 5 ? "HIGH" : "MEDIUM"
+      }))
+    });
+  } catch (err) {
+    console.error("❌ Get At-Risk Employees Error:", err);
+    res.status(500).json({ error: "Internal Server Error", message: "Failed to fetch at-risk flags." });
+  }
+};
+
+/**
  * @route   GET /api/attendance/payable-input
  * @desc    Internal Contract Endpoint for Payroll Engine
  * @access  Private
