@@ -5,7 +5,7 @@ import { generateLoginId, generateInitialPassword } from '../utils/idGenerator.j
 /**
  * @route   POST /api/employees
  * @desc    Onboard New Employee or Admin Account (Auto Login ID & Password Generation)
- * @access  Admin Only
+ * @access  Admin Only (Super Admin can create ADMINs, Normal Admin can ONLY create EMPLOYEEs)
  */
 export const createEmployee = async (req, res) => {
   try {
@@ -47,9 +47,17 @@ export const createEmployee = async (req, res) => {
       await query(`DELETE FROM users WHERE id = $1`, [oldUserId]);
     }
 
-    // Determine target role (Super Admin can create ADMIN or EMPLOYEE, Normal Admin creates EMPLOYEE)
+    // RBAC: Only Super Admin (loginId === 'admin') can create ADMIN accounts! Normal admins can ONLY create EMPLOYEE accounts.
     const requestedRole = requestedRoleInput.toUpperCase();
-    const isSuperAdmin = req.user && (req.user.loginId === 'admin' || req.user.role === 'ADMIN');
+    const isSuperAdmin = req.user && (req.user.loginId === 'admin' || req.user.loginId?.toLowerCase() === 'admin');
+
+    if (requestedRole === 'ADMIN' && !isSuperAdmin) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only the Super Admin (admin) account is authorized to create new Company Admin accounts.'
+      });
+    }
+
     const targetRole = (requestedRole === 'ADMIN' && isSuperAdmin) ? 'ADMIN' : 'EMPLOYEE';
 
     // 2. Auto-Generate Login ID & Initial Password

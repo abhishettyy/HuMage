@@ -3,7 +3,7 @@ import ControlTowerStrip from "../components/ControlTowerStrip";
 import BoardingPassCard from "../components/BoardingPassCard";
 import NewEmployeeModal from "../components/NewEmployeeModal";
 
-export default function Dashboard({ role, employees, onSelectEmployee, onAddEmployee, onDeleteEmployee }) {
+export default function Dashboard({ role, isSuperAdmin, employees, onSelectEmployee, onAddEmployee, onDeleteEmployee }) {
   const [query, setQuery] = useState("");
   const [showNewModal, setShowNewModal] = useState(false);
   const [deletingEmployee, setDeletingEmployee] = useState(null);
@@ -76,6 +76,7 @@ export default function Dashboard({ role, employees, onSelectEmployee, onAddEmpl
       {showNewModal && (
         <NewEmployeeModal
           currentEmployeeCount={employees.length}
+          isSuperAdmin={isSuperAdmin}
           onSubmit={(newEmp) => {
             onAddEmployee(newEmp);
           }}

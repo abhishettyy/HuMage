@@ -76,6 +76,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
 
   const loggedInEmployee = employees.find((e) => e.id === loggedInEmpCode) || employees[0];
+  const isSuperAdmin = Boolean(loggedInEmpCode === "admin" || (role === "admin" && (!loggedInEmpCode || loggedInEmpCode === "admin")));
 
   const handleSignIn = (selectedRole, empCode) => {
     setRole(selectedRole);
@@ -124,6 +125,7 @@ export default function App() {
               checkIn: d.checkIn,
               checkOut: d.checkOut,
               wage: 50000,
+              role: d.role
             }));
 
             const existingIds = new Set(dbMapped.map((e) => e.id));
@@ -155,7 +157,7 @@ export default function App() {
 
   const handleAddEmployee = (newEmp) => {
     setEmployees((prev) => [newEmp, ...prev]);
-    showToast("Employee Created", `Generated Login ID ${newEmp.id} for ${newEmp.name}`);
+    showToast("Account Created", `Generated Login ID ${newEmp.id} for ${newEmp.name} (${newEmp.role || 'EMPLOYEE'})`);
   };
 
   const handleDeleteEmployee = async (id) => {
@@ -319,6 +321,7 @@ export default function App() {
       {tab === "dashboard" && (
         <Dashboard
           role={role}
+          isSuperAdmin={isSuperAdmin}
           employees={employees}
           onSelectEmployee={setSelectedEmployee}
           onAddEmployee={handleAddEmployee}

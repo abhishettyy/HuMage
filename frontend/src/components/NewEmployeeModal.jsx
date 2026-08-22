@@ -2,7 +2,7 @@ import { useState } from "react";
 import { generateLoginId, STATUS } from "../data/mockData";
 import { createEmployeeApi } from "../services/api";
 
-export default function NewEmployeeModal({ currentEmployeeCount, isSuperAdmin = true, onSubmit, onClose }) {
+export default function NewEmployeeModal({ currentEmployeeCount, isSuperAdmin = false, onSubmit, onClose }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [department, setDepartment] = useState("Engineering");
@@ -25,6 +25,7 @@ export default function NewEmployeeModal({ currentEmployeeCount, isSuperAdmin = 
     setSubmitting(true);
     setErrorMsg(null);
 
+    const targetRole = isSuperAdmin ? accountRole : "EMPLOYEE";
     const joinYear = new Date(joiningDate).getFullYear();
     const fallbackId = generateLoginId(firstName, lastName, joinYear, currentEmployeeCount + 1);
     const fallbackPassword = `Dayflow@${Math.floor(1000 + Math.random() * 9000)}`;
@@ -37,7 +38,7 @@ export default function NewEmployeeModal({ currentEmployeeCount, isSuperAdmin = 
         email,
         department,
         jobPosition,
-        role: accountRole,
+        role: targetRole,
         joiningYear: joinYear,
         joiningDate,
         phone: mobile,
@@ -47,7 +48,7 @@ export default function NewEmployeeModal({ currentEmployeeCount, isSuperAdmin = 
 
       const actualLoginId = apiData?.loginId || fallbackId;
       const actualPassword = apiData?.initialPassword || fallbackPassword;
-      const assignedRole = apiData?.assignedRole || accountRole;
+      const assignedRole = apiData?.assignedRole || targetRole;
 
       const newEmp = {
         id: actualLoginId,
@@ -108,7 +109,9 @@ export default function NewEmployeeModal({ currentEmployeeCount, isSuperAdmin = 
       <div className="w-full max-w-lg bg-white rounded-xl shadow-2xl p-6 border border-slate-200">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Add New Account</h2>
+            <h2 className="text-base font-semibold text-slate-900">
+              {isSuperAdmin ? "Add New Account (Super Admin)" : "Add New Employee"}
+            </h2>
             <p className="text-xs text-slate-500">
               Admin & HR Onboarding Flow. Login ID & Password will be auto-generated.
             </p>
@@ -167,17 +170,22 @@ export default function NewEmployeeModal({ currentEmployeeCount, isSuperAdmin = 
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3 text-xs">
             {/* Account Role Selector (Super Admin Only) */}
-            <div>
-              <label className="text-slate-700 font-semibold block mb-1">Account Role Privilege *</label>
-              <select
-                value={accountRole}
-                onChange={(e) => setAccountRole(e.target.value)}
-                className="w-full border border-slate-300 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-900 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-teal-200 cursor-pointer"
-              >
-                <option value="EMPLOYEE">Employee (Standard Employee Access)</option>
-                <option value="ADMIN">Company Admin (Full Admin Control & HR Privileges)</option>
-              </select>
-            </div>
+            {isSuperAdmin && (
+              <div className="bg-amber-50/70 border border-amber-200 p-3 rounded-lg">
+                <label className="text-amber-950 font-semibold block mb-1">
+                  <i className="ti ti-shield-lock text-amber-600 mr-1" aria-hidden="true"></i>
+                  Account Role Privilege (Super Admin Only)
+                </label>
+                <select
+                  value={accountRole}
+                  onChange={(e) => setAccountRole(e.target.value)}
+                  className="w-full border border-amber-300 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-900 bg-white focus:ring-2 focus:ring-amber-300 cursor-pointer"
+                >
+                  <option value="EMPLOYEE">Employee (Standard Access)</option>
+                  <option value="ADMIN">Company Admin (Full Admin Control & HR Privileges)</option>
+                </select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -285,7 +293,7 @@ export default function NewEmployeeModal({ currentEmployeeCount, isSuperAdmin = 
                 disabled={submitting}
                 className="flex-1 text-sm font-medium py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition-colors cursor-pointer"
               >
-                {submitting ? "Creating Account..." : `Create ${accountRole === "ADMIN" ? "Admin" : "Employee"}`}
+                {submitting ? "Creating Account..." : `Create ${isSuperAdmin && accountRole === "ADMIN" ? "Admin" : "Employee"}`}
               </button>
               <button
                 type="button"
