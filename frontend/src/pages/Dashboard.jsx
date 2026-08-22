@@ -73,6 +73,44 @@ export default function Dashboard({ role, isSuperAdmin, employees, onSelectEmplo
         ))}
       </div>
 
+      {/* Flight Status Definitions & Legend Box */}
+      <div className="mt-8 bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs">
+        <h3 className="font-semibold text-slate-800 uppercase tracking-wider mb-2.5 flex items-center gap-1.5 text-[11px]">
+          <i className="ti ti-info-circle text-teal-600 text-sm" aria-hidden="true"></i>
+          Flight Status Guide & Meanings:
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-slate-600">
+          <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-start gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0 mt-1"></span>
+            <div>
+              <strong className="text-slate-900 block">Boarding (Present)</strong>
+              <span className="text-[11px]">Checked in & working on site/remote today.</span>
+            </div>
+          </div>
+          <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-start gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0 mt-1"></span>
+            <div>
+              <strong className="text-slate-900 block">In Transit (On Leave)</strong>
+              <span className="text-[11px]">On approved paid, sick, or unpaid leave.</span>
+            </div>
+          </div>
+          <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-start gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 mt-1"></span>
+            <div>
+              <strong className="text-slate-900 block">Delayed (At Risk)</strong>
+              <span className="text-[11px]">Not checked in yet today by shift time.</span>
+            </div>
+          </div>
+          <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-start gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0 mt-1"></span>
+            <div>
+              <strong className="text-slate-900 block">Grounded (Off-Duty)</strong>
+              <span className="text-[11px]">Off shift, weekend rest, or inactive.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {showNewModal && (
         <NewEmployeeModal
           currentEmployeeCount={employees.length}
