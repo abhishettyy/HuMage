@@ -12,6 +12,9 @@ export default function BoardingPassCard({ employee, onClick, onDelete, isAdmin 
   const meta = STATUS_META[employee.status] || STATUS_META[STATUS.GROUNDED];
   const isAtRisk = employee.status === STATUS.DELAYED;
 
+  const isPresent = employee.status === STATUS.BOARDING || employee.status === "boarding" || employee.status === "PRESENT";
+  const isOnLeave = employee.status === STATUS.IN_TRANSIT || employee.status === "in_transit" || employee.status === "ON_LEAVE";
+
   return (
     <div className={`relative group w-full text-left rounded-xl border overflow-hidden transition-all duration-200 shadow-sm hover:shadow ${RAMP_TINT_CLASSES[meta.ramp]}`}>
       {/* Delete Icon Button (Admin Only) */}
@@ -46,7 +49,14 @@ export default function BoardingPassCard({ employee, onClick, onDelete, isAdmin 
           </div>
 
           <div className="flex flex-col items-end gap-1 mr-6">
-            <i className={`ti ${meta.icon} text-lg text-slate-700`} aria-hidden="true"></i>
+            {isPresent ? (
+              <img src="/assets/status-dot-green.svg" alt="Present" className="w-5 h-5 drop-shadow-xs" title="Present / Boarding (Green Dot)" />
+            ) : isOnLeave ? (
+              <img src="/assets/plane.svg" alt="On Leave" className="w-5 h-5 drop-shadow-xs" title="On Leave / In Transit (Airplane)" />
+            ) : (
+              <img src="/assets/status-dot-yellow.svg" alt="Absent" className="w-5 h-5 drop-shadow-xs" title="Absent / Delayed (Yellow Dot)" />
+            )}
+
             {isAtRisk && (
               <span
                 className="text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded flex items-center gap-1"

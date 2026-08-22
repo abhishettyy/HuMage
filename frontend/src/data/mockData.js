@@ -2,18 +2,28 @@
 // Matches PS_Updated.md, UI-DESIGN.md, and TASKS_UPDATED.md requirements.
 
 export const STATUS = {
-  BOARDING: "boarding", // checked in / present
-  DELAYED: "delayed", // absent, no approved leave
-  IN_TRANSIT: "in_transit", // approved leave, active today
-  GROUNDED: "grounded", // not yet checked in, day not started
+  BOARDING: "boarding",    // Green Dot: Present & checked in
+  IN_TRANSIT: "in_transit", // Airplane Icon: On approved leave
+  DELAYED: "delayed",      // Yellow Dot: Absent / not checked in
+  GROUNDED: "grounded",   // Yellow Dot: Off duty / grounded
+  PRESENT: "boarding",
+  ON_LEAVE: "in_transit",
+  ABSENT: "delayed",
 };
 
 export const STATUS_META = {
-  [STATUS.BOARDING]: { label: "Boarding", ramp: "teal", icon: "ti-plane-departure" },
-  [STATUS.DELAYED]: { label: "Delayed", ramp: "amber", icon: "ti-alert-circle" },
-  [STATUS.IN_TRANSIT]: { label: "In transit", ramp: "slate", icon: "ti-plane" },
-  [STATUS.GROUNDED]: { label: "Grounded", ramp: "slate", icon: "ti-clock" },
+  [STATUS.BOARDING]: { label: "Boarding", ramp: "teal", iconSvg: "/assets/status-dot-green.svg", icon: "ti-circle-check" },
+  [STATUS.IN_TRANSIT]: { label: "In transit", ramp: "slate", iconSvg: "/assets/plane.svg", icon: "ti-plane" },
+  [STATUS.DELAYED]: { label: "Delayed", ramp: "amber", iconSvg: "/assets/status-dot-yellow.svg", icon: "ti-alert-circle" },
+  [STATUS.GROUNDED]: { label: "Grounded", ramp: "slate", iconSvg: "/assets/status-dot-yellow.svg", icon: "ti-clock" },
 };
+
+export function generateLoginId(firstName, lastName, year = 2026, count = 1) {
+  const f = (firstName || "E").slice(0, 2).toUpperCase();
+  const l = (lastName || "M").slice(0, 2).toUpperCase();
+  const numStr = String(count).padStart(4, "0");
+  return `OI${f}${l}${year}${numStr}`;
+}
 
 export const initialEmployees = [
   {
@@ -38,252 +48,284 @@ export const initialEmployees = [
     interests: "Aviation, photography, open-source tech",
     privateInfo: {
       dob: "1997-08-14",
-      residingAddress: "42 Mg Road, Indiranagar, Bengaluru, KA 560038",
-      personalEmail: "meera.nair.personal@gmail.com",
       gender: "Female",
-      nationality: "Indian",
       maritalStatus: "Single",
-      panNo: "ABCDE1234F",
-      uanNo: "100987654321",
-      bankDetails: {
-        accountNumber: "918020045678901",
-        bankName: "HDFC Bank",
-        ifscCode: "HDFC0001234",
-      },
+      nationality: "Indian",
+      pan: "ABCDE1234F",
+      aadhaar: "XXXX-XXXX-4321",
     },
-    security: {
-      mustChangePassword: false,
-      lastLogin: "2026-08-22 09:55 AM",
-      loginHistory: [
-        { date: "2026-08-22 09:55:12", action: "Successful Sign In", ip: "192.168.1.45", device: "Chrome / Windows" },
-        { date: "2026-08-21 09:48:02", action: "Successful Sign In", ip: "192.168.1.45", device: "Chrome / Windows" },
-        { date: "2026-08-20 10:02:44", action: "Successful Sign In", ip: "192.168.1.45", device: "Chrome / Windows" },
-      ],
+    bankDetails: {
+      bankName: "HDFC Bank",
+      accountNo: "50100234567890",
+      ifsc: "HDFC0001234",
     },
+    presentDays: 20,
+    leavesCount: 2,
   },
   {
     id: "OIARVE20230004",
     name: "Arjun Verma",
     firstName: "Arjun",
     lastName: "Verma",
-    department: "Design",
-    jobPosition: "Design Lead",
-    manager: "Priya Shah",
+    department: "Engineering",
+    jobPosition: "Engineering Director",
+    manager: "Executive Board",
     email: "arjun.verma@dayflow.io",
-    mobile: "+91 91234 56789",
+    mobile: "+91 98765 12345",
     location: "Bengaluru",
-    joiningDate: "2023-06-01",
-    status: STATUS.DELAYED,
-    checkIn: null,
+    joiningDate: "2023-01-15",
+    status: STATUS.BOARDING,
+    checkIn: "09:30",
     checkOut: null,
-    wage: 75000,
-    skills: ["Figma", "UI Systems", "User Research", "Prototyping"],
-    certifications: ["Google UX Design Professional"],
-    about: "Design Lead creating intuitive design systems and human-centric software experiences.",
-    interests: "Sketching, UI motion design",
+    wage: 120000,
+    skills: ["System Architecture", "Node.js", "PostgreSQL", "Team Leadership"],
+    certifications: ["PMP Certified", "AWS Solutions Architect"],
+    about: "Engineering leader building scalable enterprise platforms.",
+    interests: "Marathons, chess, tech mentoring",
     privateInfo: {
-      dob: "1994-03-22",
-      residingAddress: "15 Koramangala 5th Block, Bengaluru, KA 560095",
-      personalEmail: "arjun.verma.design@gmail.com",
+      dob: "1988-04-22",
       gender: "Male",
-      nationality: "Indian",
       maritalStatus: "Married",
-      panNo: "XYZPS5678K",
-      uanNo: "100123456789",
-      bankDetails: {
-        accountNumber: "50100234567890",
-        bankName: "ICICI Bank",
-        ifscCode: "ICIC0000456",
-      },
-    },
-    security: {
-      mustChangePassword: false,
-      lastLogin: "2026-08-21 06:12 PM",
-      loginHistory: [
-        { date: "2026-08-21 18:12:00", action: "Successful Sign In", ip: "192.168.1.88", device: "Safari / macOS" },
-      ],
-    },
-  },
-  {
-    id: "OIPRSH20220001",
-    name: "Priya Shah",
-    firstName: "Priya",
-    lastName: "Shah",
-    department: "Human Resources",
-    jobPosition: "HR Officer",
-    manager: "—",
-    email: "priya.shah@dayflow.io",
-    mobile: "+91 99887 76655",
-    location: "Bengaluru",
-    joiningDate: "2022-01-10",
-    status: STATUS.IN_TRANSIT,
-    checkIn: null,
-    checkOut: null,
-    wage: 60000,
-    skills: ["HR Operations", "Talent Acquisition", "Payroll Management", "Conflict Resolution"],
-    certifications: ["SHRM Certified Professional (SHRM-CP)"],
-    about: "HR Specialist dedicated to employee experience, onboarding pipelines, and organizational growth.",
-    interests: "Reading, mentoring, podcasting",
-    privateInfo: {
-      dob: "1992-11-05",
-      residingAddress: "78 Whitefield Main Rd, Bengaluru, KA 560066",
-      personalEmail: "priya.shah.hr@gmail.com",
-      gender: "Female",
       nationality: "Indian",
-      maritalStatus: "Married",
-      panNo: "PRYSH9012M",
-      uanNo: "100555444333",
-      bankDetails: {
-        accountNumber: "000401567890",
-        bankName: "Axis Bank",
-        ifscCode: "UTIB0000004",
-      },
+      pan: "XYZPD9876K",
+      aadhaar: "XXXX-XXXX-9876",
     },
-    security: {
-      mustChangePassword: false,
-      lastLogin: "2026-08-22 08:30 AM",
-      loginHistory: [
-        { date: "2026-08-22 08:30:15", action: "Successful Sign In", ip: "192.168.1.12", device: "Chrome / Windows" },
-      ],
+    bankDetails: {
+      bankName: "ICICI Bank",
+      accountNo: "000401567890",
+      ifsc: "ICIC0000004",
     },
+    presentDays: 22,
+    leavesCount: 0,
   },
   {
     id: "OIROKU20250007",
     name: "Rohan Kulkarni",
     firstName: "Rohan",
     lastName: "Kulkarni",
-    department: "Engineering",
-    jobPosition: "Backend Engineer",
+    department: "Design",
+    jobPosition: "UI/UX Lead",
     manager: "Arjun Verma",
     email: "rohan.kulkarni@dayflow.io",
-    mobile: "+91 90909 09090",
-    location: "Pune",
-    joiningDate: "2025-02-18",
-    status: STATUS.GROUNDED,
+    mobile: "+91 98765 67890",
+    location: "Mumbai",
+    joiningDate: "2025-02-01",
+    status: STATUS.IN_TRANSIT,
     checkIn: null,
     checkOut: null,
-    wage: 55000,
-    skills: ["Node.js", "PostgreSQL", "Docker", "Python", "Redis"],
-    certifications: ["PostgreSQL Associate Certification"],
-    about: "Backend Systems Engineer who loves scalable API architecture and database optimizations.",
-    interests: "Chess, trekking, robotics",
+    wage: 65000,
+    skills: ["Figma", "Design Systems", "User Research", "Prototyping"],
+    certifications: ["Google UX Design Certificate"],
+    about: "Crafting beautiful and functional aviation-themed user interfaces.",
+    interests: "UI design, sketch comedy, travel",
     privateInfo: {
-      dob: "1998-05-30",
-      residingAddress: "12 Baner Road, Pune, MH 411045",
-      personalEmail: "rohan.k.backend@gmail.com",
+      dob: "1995-11-30",
       gender: "Male",
-      nationality: "Indian",
       maritalStatus: "Single",
-      panNo: "ROHKU3456L",
-      uanNo: "100777888999",
-      bankDetails: {
-        accountNumber: "309810123456",
-        bankName: "State Bank of India",
-        ifscCode: "SBIN0001234",
-      },
+      nationality: "Indian",
+      pan: "KLMNO4567P",
+      aadhaar: "XXXX-XXXX-6789",
     },
-    security: {
-      mustChangePassword: true,
-      lastLogin: "2026-08-20 05:40 PM",
-      loginHistory: [
-        { date: "2026-08-20 17:40:00", action: "Successful Sign In", ip: "192.168.2.90", device: "Firefox / Linux" },
-      ],
+    bankDetails: {
+      bankName: "Axis Bank",
+      accountNo: "9180100234567",
+      ifsc: "UTIB0000258",
     },
+    presentDays: 18,
+    leavesCount: 4,
+  },
+  {
+    id: "OIPRPA20240019",
+    name: "Priya Patel",
+    firstName: "Priya",
+    lastName: "Patel",
+    department: "Human Resources",
+    jobPosition: "HR Lead / Company Admin",
+    manager: "Arjun Verma",
+    email: "priya.patel@dayflow.io",
+    mobile: "+91 98765 87654",
+    location: "Bengaluru",
+    joiningDate: "2024-06-01",
+    status: STATUS.BOARDING,
+    checkIn: "09:45",
+    checkOut: null,
+    wage: 75000,
+    skills: ["HR Management", "Talent Acquisition", "Payroll", "Compliance"],
+    certifications: ["SHRM Certified Professional"],
+    about: "Dedicated HR lead ensuring positive workplace culture and smooth onboarding.",
+    interests: "Reading, yoga, community organizing",
+    privateInfo: {
+      dob: "1992-09-05",
+      gender: "Female",
+      maritalStatus: "Married",
+      nationality: "Indian",
+      pan: "PRPAT3456Q",
+      aadhaar: "XXXX-XXXX-3456",
+    },
+    bankDetails: {
+      bankName: "State Bank of India",
+      accountNo: "30123456789",
+      ifsc: "SBIN0000800",
+    },
+    presentDays: 21,
+    leavesCount: 1,
+  },
+  {
+    id: "OIJODO20260002",
+    name: "John Doe",
+    firstName: "John",
+    lastName: "Doe",
+    department: "Human Resources",
+    jobPosition: "HR Manager / Admin",
+    manager: "Priya Patel",
+    email: "john.doe@dayflow.io",
+    mobile: "+91 98765 99999",
+    location: "Bengaluru",
+    joiningDate: "2026-01-10",
+    status: STATUS.DELAYED,
+    checkIn: null,
+    checkOut: null,
+    wage: 70000,
+    skills: ["HR Operations", "Onboarding", "Policy Implementation"],
+    certifications: ["HR Analytics Specialist"],
+    about: "HR Manager overseeing employee relations and company onboarding.",
+    interests: "Badminton, podcasting",
+    privateInfo: {
+      dob: "1994-12-12",
+      gender: "Male",
+      maritalStatus: "Single",
+      nationality: "Indian",
+      pan: "JOHND1122M",
+      aadhaar: "XXXX-XXXX-1122",
+    },
+    bankDetails: {
+      bankName: "Kotak Mahindra Bank",
+      accountNo: "7711223344",
+      ifsc: "KKBK0000123",
+    },
+    presentDays: 15,
+    leavesCount: 3,
+  },
+];
+
+export const initialLeaveRequests = [
+  {
+    id: "1",
+    employeeId: "OIMENA20240012",
+    name: "Meera Nair",
+    leaveType: "PAID",
+    startDate: "2025-10-28",
+    endDate: "2025-10-29",
+    days: 2,
+    reason: "Family event in Chennai",
+    status: "Pending",
+    attachmentUrl: null,
+  },
+  {
+    id: "2",
+    employeeId: "OIROKU20250007",
+    name: "Rohan Kulkarni",
+    leaveType: "SICK",
+    startDate: "2025-10-20",
+    endDate: "2025-10-20",
+    days: 1,
+    reason: "Fever and rest",
+    status: "Approved",
+    attachmentUrl: "https://example.com/medical-cert.pdf",
+  },
+  {
+    id: "3",
+    employeeId: "OIJODO20260002",
+    name: "John Doe",
+    leaveType: "UNPAID",
+    startDate: "2025-10-05",
+    endDate: "2025-10-06",
+    days: 2,
+    reason: "Personal leave",
+    status: "Approved",
+    attachmentUrl: null,
   },
 ];
 
 export const initialAttendanceRecords = [
-  { employeeId: "OIMENA20240012", name: "Meera Nair", date: "27/10/2025", checkIn: "09:55", checkOut: "18:50", workHours: "08:55", extraHours: "00:00" },
-  { employeeId: "OIMENA20240012", name: "Meera Nair", date: "28/10/2025", checkIn: "10:00", checkOut: "19:00", workHours: "09:00", extraHours: "01:00" },
-  { employeeId: "OIMENA20240012", name: "Meera Nair", date: "29/10/2025", checkIn: "09:48", checkOut: "18:40", workHours: "08:52", extraHours: "00:00" },
-  { employeeId: "OIARVE20230004", name: "Arjun Verma", date: "27/10/2025", checkIn: "10:15", checkOut: "18:30", workHours: "08:15", extraHours: "00:00" },
-  { employeeId: "OIARVE20230004", name: "Arjun Verma", date: "28/10/2025", checkIn: null, checkOut: null, workHours: "00:00", extraHours: "00:00" },
-  { employeeId: "OIPRSH20220001", name: "Priya Shah", date: "27/10/2025", checkIn: "09:30", checkOut: "17:30", workHours: "08:00", extraHours: "00:00" },
-  { employeeId: "OIROKU20250007", name: "Rohan Kulkarni", date: "27/10/2025", checkIn: "10:05", checkOut: "19:10", workHours: "09:05", extraHours: "01:05" },
+  {
+    id: "att-1",
+    employeeId: "OIMENA20240012",
+    name: "Meera Nair",
+    date: "22/10/2025",
+    checkIn: "09:58",
+    checkOut: "18:45",
+    workHours: "8.78 hrs",
+    extraHours: "0.78 hrs",
+  },
+  {
+    id: "att-2",
+    employeeId: "OIMENA20240012",
+    name: "Meera Nair",
+    date: "21/10/2025",
+    checkIn: "09:45",
+    checkOut: "18:30",
+    workHours: "8.75 hrs",
+    extraHours: "0.75 hrs",
+  },
+  {
+    id: "att-3",
+    employeeId: "OIARVE20230004",
+    name: "Arjun Verma",
+    date: "22/10/2025",
+    checkIn: "09:30",
+    checkOut: "19:15",
+    workHours: "9.75 hrs",
+    extraHours: "1.75 hrs",
+  },
 ];
 
-export const initialLeaveRequests = [
-  { id: 1, employeeId: "OIMENA20240012", name: "Meera Nair", start: "28/10/2025", end: "29/10/2025", days: 2, type: "Paid time off", status: "Pending" },
-  { id: 2, employeeId: "OIROKU20250007", name: "Rohan Kulkarni", start: "02/11/2025", end: "02/11/2025", days: 1, type: "Sick leave", status: "Approved" },
-  { id: 3, employeeId: "OIARVE20230004", name: "Arjun Verma", start: "15/10/2025", end: "16/10/2025", days: 2, type: "Unpaid leave", status: "Rejected" },
-];
+// Wage calculation utility according to PS_Updated.md §3.1
+export function computeSalary(wageInput, payableDays = 22, totalWorkingDays = 22) {
+  const W = Number(wageInput) || 50000;
+  const Ratio = Math.max(0, Math.min(1, payableDays / totalWorkingDays));
 
-export const initialLeaveBalances = {
-  OIMENA20240012: { paid: 24, sick: 7 },
-  OIARVE20230004: { paid: 22, sick: 7 },
-  OIPRSH20220001: { paid: 20, sick: 6 },
-  OIROKU20250007: { paid: 24, sick: 6 },
-};
+  // Base wage components
+  const basic = Math.round(W * 0.5); // 50% Basic
+  const hra = Math.round(W * 0.2); // 20% HRA
+  const stdAllowance = Math.round(W * 0.1); // 10% Standard Allowance
+  const perfBonus = Math.round(W * 0.05); // 5% Performance Bonus
+  const lta = Math.round(W * 0.05); // 5% LTA
 
-// Deterministic Login ID Generator (PS_Updated.md §3 algorithm)
-export function generateLoginId(firstName, lastName, joiningYear, serialNumber) {
-  const companyPrefix = "OI"; // Odoo India / Company prefix
-  const fn2 = (firstName || "XX").slice(0, 2).toUpperCase();
-  const ln2 = (lastName || "XX").slice(0, 2).toUpperCase();
-  const yr = joiningYear || new Date().getFullYear();
-  const serialStr = String(serialNumber).padStart(4, "0");
-  return `${companyPrefix}${fn2}${ln2}${yr}${serialStr}`;
-}
+  // Fixed allowance is computed as balancing figure so components sum EXACTLY to defined Wage W
+  const fixedAllowance = Math.max(0, W - (basic + hra + stdAllowance + perfBonus + lta));
 
-// Salary Component Engine (PS_Updated.md §6 formulas)
-export function computeSalary(wage, payableDays = 22, totalWorkingDays = 22) {
-  const safeWage = Math.max(0, Number(wage) || 0);
+  // Deductions
+  const pf = Math.round(basic * 0.12); // 12% PF on Basic
+  const pt = 200; // Fixed ₹200 Professional Tax
 
-  // 1. Basic Salary = 50% of Base Wage
-  const basic = Math.round(safeWage * 0.5);
+  const grossEarnings = basic + hra + stdAllowance + perfBonus + lta + fixedAllowance;
+  const totalDeductions = pf + pt;
+  const fullNetPay = grossEarnings - totalDeductions;
 
-  // 2. House Rent Allowance (HRA) = 50% of Basic
-  const hra = Math.round(basic * 0.5);
-
-  // 3. Standard Allowance = Fixed ₹4,167/month (safely capped for low wages)
-  const standardAllowance = safeWage > 0 ? Math.min(4167, Math.round(safeWage * 0.1)) : 0;
-
-  // 4. Performance Bonus = 8.33% of Basic
-  const performanceBonus = Math.round(basic * 0.0833);
-
-  // 5. Leave Travel Allowance (LTA) = 8.33% of Basic
-  const lta = Math.round(basic * 0.0833);
-
-  // 6. Fixed Allowance = Balancing figure (Wage - sum of all above rounded components)
-  const knownSum = basic + hra + standardAllowance + performanceBonus + lta;
-  const fixedAllowance = Math.max(0, safeWage - knownSum);
-
-  // Verification assertion: Gross monthly salary equals safeWage exactly
-  const grossSalary = basic + hra + standardAllowance + performanceBonus + lta + fixedAllowance;
-
-  // 7. Deductions
-  const pfEmployee = Math.round(basic * 0.12);
-  const pfEmployer = Math.round(basic * 0.12);
-  const professionalTax = safeWage > 0 ? 200 : 0;
-  const totalDeductions = pfEmployee + professionalTax;
-
-  // 8. Attendance & Leave Pipeline Adjustment
-  const safeTotalDays = Math.max(1, Number(totalWorkingDays) || 22);
-  const safePayableDays = Math.min(safeTotalDays, Math.max(0, Number(payableDays) || 0));
-  const ratio = safePayableDays / safeTotalDays;
-
-  const adjustedGross = Math.round(grossSalary * ratio);
-  const adjustedNetPay = Math.max(0, Math.round(adjustedGross - totalDeductions));
+  // Attendance-adjusted net pay based on payable days
+  const adjustedNetPay = Math.round(fullNetPay * Ratio);
 
   return {
-    wage: safeWage,
-    totalWorkingDays: safeTotalDays,
-    payableDays: safePayableDays,
-    grossSalary,
-    adjustedGross,
+    definedWage: W,
+    payableDays,
+    totalWorkingDays,
+    ratio: Ratio,
+    components: {
+      basic,
+      hra,
+      stdAllowance,
+      perfBonus,
+      lta,
+      fixedAllowance,
+    },
+    deductions: {
+      pf,
+      pt,
+      totalDeductions,
+    },
+    grossEarnings,
+    fullNetPay,
     adjustedNetPay,
-    components: [
-      { label: "Basic salary", value: basic, ramp: "teal" },
-      { label: "House rent allowance", value: hra, ramp: "teal" },
-      { label: "Standard allowance", value: standardAllowance, ramp: "teal" },
-      { label: "Performance bonus", value: performanceBonus, ramp: "teal" },
-      { label: "Leave travel allowance", value: lta, ramp: "teal" },
-      { label: "Fixed allowance", value: fixedAllowance, ramp: "slate" },
-    ],
-    deductions: [
-      { label: "Provident fund (employee)", value: pfEmployee },
-      { label: "Provident fund (employer)", value: pfEmployer },
-      { label: "Professional tax", value: professionalTax },
-    ],
   };
 }
