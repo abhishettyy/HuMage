@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import attendanceRoutes from "./routes/attendance.js";
 import salaryRoutes from "./routes/salary.js";
+import { query } from "./db/index.js";
 
 dotenv.config();
 
@@ -19,14 +20,27 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "online",
-    service: "Dayflow HRMS Backend",
-    modules: ["P2: Attendance", "P4: Salary & Payroll Engine"],
-    timestamp: new Date().toISOString(),
-  });
+// Health check endpoint (Tests DB Connection Live)
+app.get("/api/health", async (req, res) => {
+  try {
+    const dbRes = await query("SELECT NOW() as current_time, current_database() as database_name");
+    res.json({
+      status: "online",
+      service: "Dayflow HRMS Backend",
+      modules: ["P2: Attendance", "P4: Salary & Payroll Engine"],
+      database: dbRes.rows[0].database_name,
+      dbTime: dbRes.rows[0].current_time,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.json({
+      status: "online (DB disconnected)",
+      service: "Dayflow HRMS Backend",
+      modules: ["P2: Attendance", "P4: Salary & Payroll Engine"],
+      dbError: err.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // Mount P2 & P4 Routes

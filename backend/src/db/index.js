@@ -1,7 +1,12 @@
 import pg from "pg";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 const { Pool } = pg;
 
@@ -9,7 +14,10 @@ const connectionString = process.env.DATABASE_URL || "postgresql://postgres:post
 
 export const pool = new Pool({
   connectionString,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+  ssl: connectionString.includes("supabase.com") ? { rejectUnauthorized: false } : false,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
 
 pool.on("error", (err) => {
@@ -17,3 +25,4 @@ pool.on("error", (err) => {
 });
 
 export const query = (text, params) => pool.query(text, params);
+export default pool;
