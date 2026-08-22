@@ -7,8 +7,17 @@ const TABS = [
   { key: "salary", label: "Salary", icon: "ti-report-money", adminOnly: true },
 ];
 
-export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, onLogOut, onCheckIn, onCheckOut, employee }) {
+export default function NavBar({ active, onNavigate, role, currentEmployee, onOpenSelfProfile, onLogOut }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const userName = currentEmployee?.name || (role === "admin" ? "Root Super Admin" : "Employee");
+  const userId = currentEmployee?.id || (role === "admin" ? "ADMIN_ROOT" : "USER");
+  const userInitials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("") || "US";
 
   return (
     <div className="border-b border-slate-100 bg-white sticky top-0 z-40 shadow-sm">
@@ -30,7 +39,7 @@ export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, on
             <button
               key={t.key}
               onClick={() => onNavigate(t.key)}
-              className={`text-sm px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors ${
+              className={`text-sm px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer ${
                 active === t.key
                   ? "bg-teal-50 text-teal-800 font-medium"
                   : "text-slate-600 hover:bg-slate-50"
@@ -74,10 +83,9 @@ export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, on
           <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-700 relative transition-colors focus:outline-none focus:ring-2 focus:ring-teal-200"
+            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-200 cursor-pointer"
           >
-            {role === "admin" ? "AD" : "MN"}
-            <span className={`absolute top-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${employee?.status === "present" ? "bg-teal-500" : (employee?.status === "on_leave" ? "bg-slate-400" : "bg-amber-500")}`}></span>
+            {userInitials}
           </button>
 
           {dropdownOpen && (
@@ -86,11 +94,11 @@ export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, on
               onMouseLeave={() => setDropdownOpen(false)}
             >
               <div className="px-4 py-2 border-b border-slate-100">
-                <p className="text-xs font-semibold text-slate-900">
-                  {role === "admin" ? "System Admin" : "Meera Nair"}
+                <p className="text-xs font-semibold text-slate-900 truncate">
+                  {userName}
                 </p>
                 <p className="text-[11px] text-slate-500 font-mono">
-                  {role === "admin" ? "ADMIN_ROOT" : "OIMENA20240012"}
+                  {userId}
                 </p>
               </div>
 
@@ -99,7 +107,7 @@ export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, on
                   setDropdownOpen(false);
                   onOpenSelfProfile();
                 }}
-                className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                className="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
               >
                 <i className="ti ti-user text-sm text-slate-500" aria-hidden="true"></i> My Profile
               </button>
@@ -109,7 +117,7 @@ export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, on
                   setDropdownOpen(false);
                   onLogOut();
                 }}
-                className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 border-t border-slate-100"
+                className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 border-t border-slate-100 cursor-pointer"
               >
                 <i className="ti ti-logout text-sm text-rose-500" aria-hidden="true"></i> Log Out
               </button>

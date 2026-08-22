@@ -27,13 +27,56 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
-      {/* Role-Specific Views */}
+      {/* Header with Month Navigation */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">Attendance</h1>
+          <p className="text-xs text-slate-600 mt-0.5">
+            {role === "admin"
+              ? isSuperAdmin
+                ? "Workforce attendance log & real-time presence control tower."
+                : "Workforce attendance log & personal HR check-in runway."
+              : `Your daily check-in runway and monthly log (${currentUser?.name || "Employee"}).`}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1 text-xs">
+          <button
+            onClick={() => setCurrentMonth("September 2025")}
+            className="text-slate-500 hover:text-slate-900 p-0.5 cursor-pointer"
+          >
+            <i className="ti ti-chevron-left" aria-hidden="true"></i>
+          </button>
+          <span className="font-medium text-slate-800 font-mono px-1">{currentMonth}</span>
+          <button
+            onClick={() => setCurrentMonth("November 2025")}
+            className="text-slate-500 hover:text-slate-900 p-0.5 cursor-pointer"
+          >
+            <i className="ti ti-chevron-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
       {role === "admin" ? (
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-4 rounded-t-xl border border-slate-800">
-            <h1 className="text-xl font-bold text-slate-100">Attendance</h1>
-            <div className="relative w-full sm:w-80">
-              <img src="/assets/search.svg" alt="Search" className="absolute left-3 top-2.5 w-4 h-4 opacity-50" />
+        <div className="space-y-6">
+          {/* HR / Company Admin Personal Attendance Check-In Runway (Hidden for Super Admin) */}
+          {!isSuperAdmin && (
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                My HR Admin Attendance Runway ({currentUser?.name || "Company Admin"})
+              </h2>
+              <CheckInRunway
+                checkIn={currentUser?.checkIn}
+                checkOut={currentUser?.checkOut}
+                onCheckIn={() => onCheckIn(currentUser?.id)}
+                onCheckOut={() => onCheckOut(currentUser?.id)}
+              />
+            </div>
+          )}
+
+          <div className="flex justify-between items-center">
+            <div className="relative w-full sm:w-72">
+              <i className="ti ti-search absolute left-3 top-2.5 text-slate-400 text-sm" aria-hidden="true"></i>
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

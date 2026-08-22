@@ -47,14 +47,16 @@ export const createEmployee = async (req, res) => {
       await query(`DELETE FROM users WHERE id = $1`, [oldUserId]);
     }
 
-    // RBAC: Only Super Admin (loginId === 'admin') can create ADMIN accounts! Normal admins can ONLY create EMPLOYEE accounts.
+    // STRICT SUPER ADMIN SECURITY CHECK:
+    // ONLY the root 'admin' account (loginId === 'admin') is Super Admin and can create Company Admin accounts.
+    // Normal Company Admins CANNOT create other Admins under any circumstances.
     const requestedRole = requestedRoleInput.toUpperCase();
-    const isSuperAdmin = req.user && (req.user.loginId === 'admin' || req.user.loginId?.toLowerCase() === 'admin');
+    const isSuperAdmin = req.user && req.user.loginId && req.user.loginId.toLowerCase() === 'admin';
 
     if (requestedRole === 'ADMIN' && !isSuperAdmin) {
       return res.status(403).json({
         error: 'Forbidden',
-        message: 'Only the Super Admin (admin) account is authorized to create new Company Admin accounts.'
+        message: 'Only the Root Super Admin (admin) account is authorized to create new Company Admin accounts.'
       });
     }
 

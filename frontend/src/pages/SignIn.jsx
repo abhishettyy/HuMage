@@ -27,15 +27,19 @@ export default function SignIn({ onSignIn }) {
       const data = await loginUser(loginId, password);
       if (data && data.user) {
         const userRole = (data.user.role || "").toLowerCase() === "admin" ? "admin" : "employee";
-        onSignIn(userRole);
+        const actualLoginId = data.user.loginId || loginId.trim();
+        onSignIn(userRole, actualLoginId);
       } else {
-        onSignIn(loginId.toLowerCase().includes("admin") ? "admin" : "employee");
+        const fallbackRole = loginId.trim().toLowerCase() === "admin" || loginId.toLowerCase().includes("admin") ? "admin" : "employee";
+        onSignIn(fallbackRole, loginId.trim());
       }
     } catch (err) {
       if (err.message && err.message.includes("Invalid")) {
         setError("Invalid Login ID or Password. Please check credentials.");
       } else {
-        onSignIn(loginId.toLowerCase().includes("admin") ? "admin" : "employee");
+        // Fallback offline sign in
+        const fallbackRole = loginId.trim().toLowerCase() === "admin" || loginId.toLowerCase().includes("admin") ? "admin" : "employee";
+        onSignIn(fallbackRole, loginId.trim());
       }
     } finally {
       setLoading(false);
@@ -73,7 +77,7 @@ export default function SignIn({ onSignIn }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-8">
       <div className="w-full max-w-sm bg-white border border-slate-100 rounded-xl p-8 shadow-sm">
         <div className="flex items-center gap-2 mb-6">
           <i className="ti ti-plane-departure text-teal-600 text-xl" aria-hidden="true"></i>
@@ -109,7 +113,7 @@ export default function SignIn({ onSignIn }) {
                   setResetId(loginId);
                   setShowForgotModal(true);
                 }}
-                className="text-[11px] text-teal-700 hover:underline font-medium"
+                className="text-[11px] text-teal-700 hover:underline font-medium cursor-pointer"
               >
                 Forgot password?
               </button>
@@ -131,10 +135,42 @@ export default function SignIn({ onSignIn }) {
           </button>
         </form>
 
-        <div className="mt-5 pt-4 border-t border-slate-100 text-[11px] text-slate-500 space-y-1">
-          <p className="font-semibold text-slate-700">Seeded Credentials:</p>
-          <p>• Admin: <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-900 font-mono">admin</code> / <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-900 font-mono">Dayflow@2026</code></p>
-          <p>• Employee: <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-900 font-mono">OIMENA20240012</code> / <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-900 font-mono">Dayflow@2026</code></p>
+        {/* Demo Credentials Guide Box */}
+        <div className="mt-6 pt-4 border-t border-slate-100 text-xs space-y-3">
+          <p className="font-semibold text-slate-800 text-[11px] uppercase tracking-wider">Demo Credentials & Role Profiles:</p>
+          
+          {/* Super Admin */}
+          <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px] space-y-1">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-slate-900">👑 Root Super Admin</span>
+              <span className="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-mono font-bold text-[10px]">SUPER_ADMIN</span>
+            </div>
+            <p className="text-slate-600">
+              ID: <code className="font-mono text-slate-900 font-bold bg-white px-1 py-0.5 rounded border border-slate-200">admin</code> · Pass: <code className="font-mono text-slate-900 font-bold bg-white px-1 py-0.5 rounded border border-slate-200">Dayflow@2026</code>
+            </p>
+          </div>
+
+          {/* Company Admin / HR */}
+          <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px] space-y-1">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-slate-900">🛡️ Company Admin / HR</span>
+              <span className="bg-purple-100 text-purple-900 px-1.5 py-0.5 rounded font-mono font-bold text-[10px]">ADMIN</span>
+            </div>
+            <p className="text-slate-600">
+              ID: <code className="font-mono text-slate-900 font-bold bg-white px-1 py-0.5 rounded border border-slate-200">OIJODO20260002</code> · Pass: <code className="font-mono text-slate-900 font-bold bg-white px-1 py-0.5 rounded border border-slate-200">Dayflow@NkvUYZ</code>
+            </p>
+          </div>
+
+          {/* Sample Employee */}
+          <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px] space-y-1">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-slate-900">👤 Sample Employee</span>
+              <span className="bg-teal-100 text-teal-900 px-1.5 py-0.5 rounded font-mono font-bold text-[10px]">EMPLOYEE</span>
+            </div>
+            <p className="text-slate-600">
+              ID: <code className="font-mono text-slate-900 font-bold bg-white px-1 py-0.5 rounded border border-slate-200">OIMENA20240012</code> · Pass: <code className="font-mono text-slate-900 font-bold bg-white px-1 py-0.5 rounded border border-slate-200">Dayflow@2026</code>
+            </p>
+          </div>
         </div>
       </div>
 
@@ -176,7 +212,7 @@ export default function SignIn({ onSignIn }) {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-teal-600 text-white font-medium py-2 rounded-md hover:bg-teal-700 transition-colors"
+                  className="w-full bg-teal-600 text-white font-medium py-2 rounded-md hover:bg-teal-700 transition-colors cursor-pointer"
                 >
                   Request Reset OTP
                 </button>
@@ -212,7 +248,7 @@ export default function SignIn({ onSignIn }) {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-slate-900 text-white font-medium py-2 rounded-md hover:bg-slate-800 transition-colors"
+                  className="w-full bg-slate-900 text-white font-medium py-2 rounded-md hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Set New Password
                 </button>
