@@ -2,14 +2,17 @@ import { useState } from "react";
 import DeparturesBoard from "../components/DeparturesBoard";
 import { initialLeaveBalances } from "../data/mockData";
 
-export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave, onSubmitLeave }) {
+export default function TimeOff({ role, currentEmployee, employees, requests, onApproveLeave, onRejectLeave, onSubmitLeave }) {
   const [showNew, setShowNew] = useState(false);
 
   // Form state
   const [leaveType, setLeaveType] = useState("Paid time off");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [reason, setReason] = useState("");
   const [hasAttachment, setHasAttachment] = useState(false);
+
+  const currentUser = currentEmployee || employees[0];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -25,14 +28,23 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
     const startFormatted = startObj.toLocaleDateString("en-GB");
     const endFormatted = endObj.toLocaleDateString("en-GB");
 
+    // Map UI leave type to backend ENUM
+    let mappedType = "PAID";
+    if (leaveType === "Sick leave") mappedType = "SICK";
+    if (leaveType === "Unpaid leave") mappedType = "UNPAID";
+
     const newReq = {
       id: Date.now(),
-      employeeId: "OIMENA20240012",
-      name: "Meera Nair",
+      employeeId: currentUser.id,
+      name: currentUser.name,
       start: startFormatted,
       end: endFormatted,
-      days: diffDays,
+      startDate,
+      endDate,
+      leaveType: mappedType,
       type: leaveType,
+      days: diffDays,
+      reason: reason || `${leaveType} application`,
       status: "Pending",
     };
 
@@ -40,9 +52,14 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
     setShowNew(false);
     setStartDate("");
     setEndDate("");
+    setReason("");
   };
 
-  const balances = initialLeaveBalances["OIMENA20240012"] || { paid: 24, sick: 7 };
+  const balances = initialLeaveBalances[currentUser?.id] || { paid: 24, sick: 7 };
+
+  const userRequests = requests.filter(
+    (r) => r.employeeId === currentUser?.id || r.name === currentUser?.name
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
@@ -52,7 +69,7 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
           <p className="text-xs text-slate-600 mt-0.5">
             {role === "admin"
               ? "Departures Board — Review & approve employee leave requests."
-              : "Flight status — Track your balances and submit time off."}
+              : `Flight status — Track your balances and submit time off (${currentUser?.name || "Employee"}).`}
           </p>
         </div>
         {role !== "admin" && (
@@ -84,7 +101,7 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
       )}
 
       <DeparturesBoard
-        requests={role === "admin" ? requests : requests.filter((r) => r.name === "Meera Nair")}
+        requests={role === "admin" ? requests : userRequests}
         showActions={role === "admin"}
         onApprove={onApproveLeave}
         onReject={onRejectLeave}
@@ -135,6 +152,17 @@ export default function TimeOff({ role, requests, onApproveLeave, onRejectLeave,
                     className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-teal-200"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-slate-700 font-medium block mb-1">Reason / Notes</label>
+                <input
+                  type="text"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="e.g. Family vacation"
+                  className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-teal-200"
+                />
               </div>
 
               {leaveType === "Sick leave" && (

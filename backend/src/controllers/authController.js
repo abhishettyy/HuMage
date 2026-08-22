@@ -5,18 +5,17 @@ import { generateLoginId } from '../utils/idGenerator.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-dayflow-jwt-token-key-2026';
 
-// Temporary memory store for password reset OTPs & pending admin approvals
+// Temporary memory store for 6-digit password reset OTPs
 const passwordResetTokens = new Map();
-const pendingAdminApprovals = new Map();
 
 /**
  * @route   POST /api/auth/signup
- * @desc    Company Admin Self-Registration (Requires Super Admin Approval or Master Key)
+ * @desc    Company Admin Self-Registration (Creates active Admin account directly)
  * @access  Public
  */
 export const signup = async (req, res) => {
   try {
-    const { companyName, name, email, password, companyPrefix = 'OI', masterKey } = req.body;
+    const { companyName, name, email, password, companyPrefix = 'OI' } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -34,11 +33,6 @@ export const signup = async (req, res) => {
       });
     }
 
-    // SUPER ADMIN SECURITY GATE:
-    // If masterKey === 'SUPER_ADMIN_2026' or auto-approved by Super Admin, account is active immediately.
-    // Otherwise, placed in PENDING_APPROVAL state to prevent unauthorized employee escalation.
-    const isAutoApproved = masterKey === 'SUPER_ADMIN_2026' || process.env.AUTO_APPROVE_ADMIN === 'true';
-
     const nameParts = name.trim().split(' ');
     const firstName = nameParts[0] || 'Admin';
     const lastName = nameParts.slice(1).join(' ') || 'User';
@@ -47,7 +41,7 @@ export const signup = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Insert User with ADMIN role
+    // Insert User with ADMIN role directly
     const userRes = await query(
       `INSERT INTO users (login_id, email, password_hash, role, company_prefix)
        VALUES ($1, $2, $3, 'ADMIN', $4)
@@ -83,17 +77,6 @@ export const signup = async (req, res) => {
       [newEmpId]
     );
 
-    if (!isAutoApproved) {
-      pendingAdminApprovals.set(newUser.id, {
-        id: newUser.id,
-        loginId: newUser.login_id,
-        email: newUser.email,
-        name: name.trim(),
-        companyName: companyName || 'Default Corp',
-        createdAt: new Date().toISOString()
-      });
-    }
-
     const token = jwt.sign(
       { userId: newUser.id, loginId: newUser.login_id, role: 'ADMIN', employeeId: newEmpId },
       JWT_SECRET,
@@ -101,12 +84,9 @@ export const signup = async (req, res) => {
     );
 
     res.status(201).json({
-      message: isAutoApproved
-        ? 'Company Admin registered & verified successfully!'
-        : 'Admin account registration submitted. Pending Super Admin verification.',
+      message: 'Company Admin registered & created successfully!',
       loginId,
       token,
-      approvalStatus: isAutoApproved ? 'APPROVED' : 'PENDING_SUPER_ADMIN_APPROVAL',
       user: {
         id: newUser.id,
         loginId: newUser.login_id,
@@ -125,35 +105,6 @@ export const signup = async (req, res) => {
       error: 'Server Error',
       message: 'Failed to register company admin.'
     });
-  }
-};
-
-/**
- * @route   GET /api/auth/pending-admins
- * @desc    Super Admin endpoint to list pending Admin registration requests
- * @access  Super Admin Only
- */
-export const getPendingAdmins = async (req, res) => {
-  try {
-    const list = Array.from(pendingAdminApprovals.values());
-    res.json({ pendingAdmins: list });
-  } catch (error) {
-    res.status(500).json({ error: 'Server Error', message: 'Failed to fetch pending admins.' });
-  }
-};
-
-/**
- * @route   PUT /api/auth/approve-admin/:id
- * @desc    Super Admin endpoint to approve a pending Admin account
- * @access  Super Admin Only
- */
-export const approveAdmin = async (req, res) => {
-  try {
-    const { id } = req.params;
-    pendingAdminApprovals.delete(id);
-    res.json({ success: true, message: `Admin account ${id} approved by Super Admin.` });
-  } catch (error) {
-    res.status(500).json({ error: 'Server Error', message: 'Failed to approve admin.' });
   }
 };
 
@@ -223,68 +174,63 @@ export const login = async (req, res) => {
         email: user.email,
         role: user.role,
         employeeId: user.employee_id,
-        name: user.name,
-        department: user.department,
-        jobPosition: user.job_position,
-        avatarUrl: user.avatar_url
+        name: user.name || 'User',
+        department: user.department || 'General',
+        jobPosition: user.job_position || 'Employee',
+        avatarUrl: user.avatar_url || ''
       }
     });
+
   } catch (error) {
     console.error('❌ Login Error:', error);
     res.status(500).json({
       error: 'Server Error',
-      message: 'An internal error occurred during login. Please try again.'
+      message: 'Failed to process login.'
     });
   }
 };
 
 /**
  * @route   POST /api/auth/forgot-password
- * @desc    Generate Password Reset OTP/Token for given Login ID or Email
+ * @desc    Generate 6-Digit Password Reset OTP
  * @access  Public
  */
 export const forgotPassword = async (req, res) => {
   try {
     const { loginId } = req.body;
-
     if (!loginId) {
-      return res.status(400).json({ error: 'Validation Error', message: 'Login ID or Email is required.' });
+      return res.status(400).json({ error: 'Invalid Input', message: 'Login ID or Email is required.' });
     }
 
     const userRes = await query(
-      `SELECT id, login_id, email FROM users WHERE LOWER(login_id) = LOWER($1) OR LOWER(email) = LOWER($1)`,
+      `SELECT u.id, u.login_id, u.email FROM users u WHERE LOWER(u.login_id) = LOWER($1) OR LOWER(u.email) = LOWER($1)`,
       [loginId.trim()]
     );
 
     if (userRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Not Found', message: 'No account found with this Login ID or Email.' });
+      return res.status(404).json({ error: 'Not Found', message: 'No account found with provided credentials.' });
     }
 
     const user = userRes.rows[0];
-    const resetOtp = String(Math.floor(100000 + Math.random() * 900000));
-    
-    passwordResetTokens.set(user.login_id.toLowerCase(), resetOtp);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 15 * 60 * 1000; // 15 mins expiry
 
-    await query(
-      `INSERT INTO audit_logs (user_id, action) VALUES ($1, $2)`,
-      [user.id, `Requested password reset OTP for ${user.login_id}`]
-    );
+    passwordResetTokens.set(user.id, { otp, expiresAt, loginId: user.login_id });
 
     res.json({
-      message: `Password reset OTP generated. Verify OTP to reset password.`,
-      loginId: user.login_id,
-      email: user.email,
-      otp: resetOtp
+      message: 'Password reset OTP generated successfully.',
+      otpDemo: otp,
+      loginId: user.login_id
     });
   } catch (error) {
     console.error('❌ Forgot Password Error:', error);
-    res.status(500).json({ error: 'Server Error', message: 'Failed to process forgot password request.' });
+    res.status(500).json({ error: 'Server Error', message: 'Failed to generate reset OTP.' });
   }
 };
 
 /**
  * @route   POST /api/auth/reset-password
- * @desc    Reset User Password with OTP & New Password (hashes via bcrypt)
+ * @desc    Verify OTP and Update User Password
  * @access  Public
  */
 export const resetPassword = async (req, res) => {
@@ -292,41 +238,30 @@ export const resetPassword = async (req, res) => {
     const { loginId, otp, newPassword } = req.body;
 
     if (!loginId || !otp || !newPassword) {
-      return res.status(400).json({ error: 'Validation Error', message: 'Login ID, OTP, and New Password are required.' });
+      return res.status(400).json({ error: 'Invalid Input', message: 'Login ID, OTP, and new password required.' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'Validation Error', message: 'Password must be at least 6 characters.' });
+    const userRes = await query(
+      `SELECT u.id FROM users u WHERE LOWER(u.login_id) = LOWER($1) OR LOWER(u.email) = LOWER($1)`,
+      [loginId.trim()]
+    );
+
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Not Found', message: 'Account not found.' });
     }
 
-    const cachedOtp = passwordResetTokens.get(loginId.trim().toLowerCase());
-    
-    if (!cachedOtp || cachedOtp !== String(otp).trim()) {
-      return res.status(400).json({ error: 'Invalid OTP', message: 'The reset OTP is invalid or expired.' });
+    const userId = userRes.rows[0].id;
+    const resetData = passwordResetTokens.get(userId);
+
+    if (!resetData || resetData.otp !== otp || Date.now() > resetData.expiresAt) {
+      return res.status(400).json({ error: 'Invalid OTP', message: 'Expired or invalid 6-digit OTP code.' });
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
+    await query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [passwordHash, userId]);
+    passwordResetTokens.delete(userId);
 
-    const updateRes = await query(
-      `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE LOWER(login_id) = LOWER($2) RETURNING id, login_id`,
-      [passwordHash, loginId.trim()]
-    );
-
-    if (updateRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Not Found', message: 'User account not found.' });
-    }
-
-    passwordResetTokens.delete(loginId.trim().toLowerCase());
-
-    await query(
-      `INSERT INTO audit_logs (user_id, action) VALUES ($1, $2)`,
-      [updateRes.rows[0].id, `Successfully reset account password`]
-    );
-
-    res.json({
-      message: 'Password reset successfully! You can now log in with your new password.',
-      loginId: updateRes.rows[0].login_id
-    });
+    res.json({ success: true, message: 'Password reset successfully. You can now log in.' });
   } catch (error) {
     console.error('❌ Reset Password Error:', error);
     res.status(500).json({ error: 'Server Error', message: 'Failed to reset password.' });
@@ -335,60 +270,41 @@ export const resetPassword = async (req, res) => {
 
 /**
  * @route   GET /api/auth/me
- * @desc    Get Current User Profile from JWT Token
+ * @desc    Get Currently Authenticated User Session Info
  * @access  Private
  */
 export const getMe = async (req, res) => {
   try {
-    const userId = req.user.userId;
-
-    const userResult = await query(
-      `SELECT u.id, u.login_id, u.email, u.role, u.company_prefix, u.created_at,
-              e.id as employee_id, e.emp_code, e.name, e.first_name, e.last_name,
-              e.department, e.job_position, e.manager_name, e.phone, e.location, e.avatar_url
+    const result = await query(
+      `SELECT u.id, u.login_id, u.email, u.role, u.company_prefix,
+              e.id as employee_id, e.name, e.department, e.job_position, e.avatar_url
        FROM users u
        LEFT JOIN employees e ON e.user_id = u.id
        WHERE u.id = $1`,
-      [userId]
+      [req.user.userId]
     );
 
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Not Found',
-        message: 'User profile not found.'
-      });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Not Found', message: 'User session not found.' });
     }
 
-    const user = userResult.rows[0];
-
+    const user = result.rows[0];
     res.json({
       user: {
         id: user.id,
         loginId: user.login_id,
         email: user.email,
         role: user.role,
-        companyPrefix: user.company_prefix,
-        createdAt: user.created_at,
-        employee: {
-          id: user.employee_id,
-          empCode: user.emp_code,
-          name: user.name,
-          firstName: user.first_name,
-          lastName: user.last_name,
-          department: user.department,
-          jobPosition: user.job_position,
-          managerName: user.manager_name,
-          phone: user.phone,
-          location: user.location,
-          avatarUrl: user.avatar_url
-        }
+        employeeId: user.employee_id,
+        name: user.name || 'User',
+        department: user.department || 'General',
+        jobPosition: user.job_position || 'Employee',
+        avatarUrl: user.avatar_url || ''
       }
     });
+
   } catch (error) {
     console.error('❌ GetMe Error:', error);
-    res.status(500).json({
-      error: 'Server Error',
-      message: 'Failed to retrieve profile information.'
-    });
+    res.status(500).json({ error: 'Server Error', message: 'Failed to fetch user session.' });
   }
 };

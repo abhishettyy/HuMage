@@ -3,7 +3,8 @@ import {
   createEmployee,
   getAllEmployees,
   getEmployeeById,
-  updateEmployee
+  updateEmployee,
+  deleteEmployee
 } from '../controllers/employeeController.js';
 import { authenticateToken, requireAdmin } from '../middleware/auth.js';
 
@@ -14,7 +15,8 @@ router.get('/', authenticateToken, getAllEmployees);
 router.get('/:id', authenticateToken, getEmployeeById);
 router.put('/:id', authenticateToken, updateEmployee);
 
-// Admin-only route for onboarding new employee
+// Admin-only routes for onboarding & deleting employee
 router.post('/', authenticateToken, requireAdmin, createEmployee);
+router.delete('/:id', authenticateToken, requireAdmin, deleteEmployee);
 
 export default router;

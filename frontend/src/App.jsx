@@ -17,14 +17,30 @@ import {
   fetchEmployeesApi,
   checkInEmployee,
   checkOutEmployee,
-  createEmployeeApi,
+  deleteEmployeeApi,
   submitLeaveRequest,
   approveLeaveRequest,
   rejectLeaveRequest,
 } from "./services/api";
 
 export default function App() {
-  const [role, setRole] = useState(null); // null | "admin" | "employee"
+  // Session persistence across page refreshes
+  const [role, setRole] = useState(() => {
+    try {
+      return localStorage.getItem("dayflow_role") || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [loggedInEmpCode, setLoggedInEmpCode] = useState(() => {
+    try {
+      return localStorage.getItem("dayflow_emp_code") || null;
+    } catch {
+      return null;
+    }
+  });
+
   const [tab, setTab] = useState("dashboard");
 
   // LocalStorage persistent state managers
@@ -59,12 +75,38 @@ export default function App() {
   const [isSelfProfile, setIsSelfProfile] = useState(false);
   const [toast, setToast] = useState(null);
 
+  const loggedInEmployee = employees.find((e) => e.id === loggedInEmpCode) || employees[0];
+
+  const handleSignIn = (selectedRole, empCode) => {
+    setRole(selectedRole);
+    if (empCode) setLoggedInEmpCode(empCode);
+    try {
+      localStorage.setItem("dayflow_role", selectedRole);
+      if (empCode) localStorage.setItem("dayflow_emp_code", empCode);
+    } catch {
+      // fallback
+    }
+  };
+
+  const handleLogOut = () => {
+    setRole(null);
+    setLoggedInEmpCode(null);
+    try {
+      localStorage.removeItem("dayflow_role");
+      localStorage.removeItem("dayflow_emp_code");
+      localStorage.removeItem("dayflow_token");
+    } catch {
+      // fallback
+    }
+    setSelectedEmployee(null);
+    setIsSelfProfile(false);
+  };
+
   // Fetch employees directly from Supabase DB via Node.js API when authenticated
   useEffect(() => {
     if (role) {
       fetchEmployeesApi().then((dbEmployees) => {
         if (dbEmployees && dbEmployees.length > 0) {
-          // Merge dbEmployees into current state
           setEmployees((prev) => {
             const dbMapped = dbEmployees.map((d) => ({
               id: d.empCode || d.id,
@@ -84,7 +126,6 @@ export default function App() {
               wage: 50000,
             }));
 
-            // Combine non-duplicate employees
             const existingIds = new Set(dbMapped.map((e) => e.id));
             const localOnly = prev.filter((e) => !existingIds.has(e.id));
             return [...dbMapped, ...localOnly];
@@ -112,25 +153,22 @@ export default function App() {
     setTimeout(() => setToast(null), 4500);
   };
 
-  const handleAddEmployee = async (newEmp) => {
+  const handleAddEmployee = (newEmp) => {
     setEmployees((prev) => [newEmp, ...prev]);
     showToast("Employee Created", `Generated Login ID ${newEmp.id} for ${newEmp.name}`);
+  };
 
-    // Persist directly to Supabase PostgreSQL database
+  const handleDeleteEmployee = async (id) => {
+    const emp = employees.find((e) => e.id === id);
+    setEmployees((prev) => prev.filter((e) => e.id !== id));
+    if (emp) {
+      showToast("Employee Deleted", `Deleted employee record for ${emp.name} (${id})`);
+    }
+
     try {
-      await createEmployeeApi({
-        firstName: newEmp.firstName,
-        lastName: newEmp.lastName,
-        email: newEmp.email,
-        department: newEmp.department,
-        jobPosition: newEmp.jobPosition,
-        joiningYear: new Date().getFullYear(),
-        phone: newEmp.mobile,
-        location: newEmp.location,
-        wage: newEmp.wage,
-      });
+      await deleteEmployeeApi(id);
     } catch (err) {
-      console.warn("Supabase DB sync fallback for new employee:", err.message);
+      console.warn("Supabase DB delete sync error:", err.message);
     }
   };
 
@@ -139,23 +177,25 @@ export default function App() {
     showToast("Profile Updated", `Saved profile changes for ${updatedEmp.name}`);
   };
 
-  const handleCheckIn = async () => {
-    const apiRes = await checkInEmployee("OIMENA20240012");
+  const handleCheckIn = async (targetId) => {
+    const empId = targetId || loggedInEmployee.id;
+    const emp = employees.find((e) => e.id === empId) || loggedInEmployee;
+
+    const apiRes = await checkInEmployee(emp.id);
     const timeStr = apiRes?.checkIn || new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 
     setEmployees((prev) =>
       prev.map((e) =>
-        e.name === "Meera Nair"
-          ? { ...e, status: STATUS.BOARDING, checkIn: timeStr }
+        e.id === emp.id
+          ? { ...e, status: STATUS.BOARDING, checkIn: timeStr, presentDays: (e.presentDays || 0) + 1 }
           : e
       )
     );
 
-    // Add to attendance log table
     setAttendanceRecords((prev) => [
       {
-        employeeId: "OIMENA20240012",
-        name: "Meera Nair",
+        employeeId: emp.id,
+        name: emp.name,
         date: new Date().toLocaleDateString("en-GB"),
         checkIn: timeStr,
         checkOut: null,
@@ -165,26 +205,29 @@ export default function App() {
       ...prev,
     ]);
 
-    showToast("Checked In", `Check-in recorded at ${timeStr}. Flight status set to Boarding.`);
+    showToast("Checked In", `Check-in recorded at ${timeStr} for ${emp.name}. Status set to Boarding (🟢 Green Dot).`);
   };
 
-  const handleCheckOut = async () => {
-    const apiRes = await checkOutEmployee("OIMENA20240012");
+  const handleCheckOut = async (targetId) => {
+    const empId = targetId || loggedInEmployee.id;
+    const emp = employees.find((e) => e.id === empId) || loggedInEmployee;
+
+    const apiRes = await checkOutEmployee(emp.id);
     const timeStr = apiRes?.checkOut || new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 
     setEmployees((prev) =>
-      prev.map((e) => (e.name === "Meera Nair" ? { ...e, checkOut: timeStr } : e))
+      prev.map((e) => (e.id === emp.id ? { ...e, checkOut: timeStr } : e))
     );
 
     setAttendanceRecords((prev) =>
       prev.map((r, i) =>
-        i === 0 && r.employeeId === "OIMENA20240012"
+        i === 0 && r.employeeId === emp.id
           ? { ...r, checkOut: timeStr, workHours: `${apiRes?.workHours || 8.85} hrs`, extraHours: `${apiRes?.extraHours || 0.85} hrs` }
           : r
       )
     );
 
-    showToast("Checked Out", `Check-out recorded at ${timeStr}. Day landing completed.`);
+    showToast("Checked Out", `Check-out recorded at ${timeStr} for ${emp.name}. Day landing completed.`);
   };
 
   const handleApproveLeave = async (id) => {
@@ -194,7 +237,6 @@ export default function App() {
       prev.map((r) => (r.id === id ? { ...r, status: "Approved" } : r))
     );
 
-    // Update employee status to In Transit
     if (req) {
       setEmployees((prev) =>
         prev.map((e) => (e.id === req.employeeId ? { ...e, status: STATUS.IN_TRANSIT } : e))
@@ -220,19 +262,18 @@ export default function App() {
   const handleSubmitLeave = async (newReq) => {
     await submitLeaveRequest(newReq);
     setLeaveRequests((prev) => [newReq, ...prev]);
-    showToast("Leave Request Submitted", "Your request is pending Admin/HR review.");
+    showToast("Leave Request Submitted", `Leave request for ${newReq.name} submitted for Admin/HR review.`);
   };
 
   if (!role) {
-    return <SignIn onSignIn={setRole} />;
+    return <SignIn onSignIn={handleSignIn} />;
   }
 
-  // Viewing a specific employee or self profile
   if (selectedEmployee || isSelfProfile) {
     const targetEmp = isSelfProfile
       ? role === "admin"
-        ? employees[2] || employees[0] // Priya Shah / HR Admin
-        : employees[0] // Meera Nair
+        ? employees[2] || employees[0]
+        : loggedInEmployee
       : selectedEmployee;
 
     return (
@@ -249,11 +290,7 @@ export default function App() {
             setSelectedEmployee(null);
             setIsSelfProfile(true);
           }}
-          onLogOut={() => {
-            setRole(null);
-            setSelectedEmployee(null);
-            setIsSelfProfile(false);
-          }}
+          onLogOut={handleLogOut}
         />
         <EmployeeInfo
           employee={targetEmp}
@@ -276,7 +313,7 @@ export default function App() {
         onNavigate={setTab}
         role={role}
         onOpenSelfProfile={() => setIsSelfProfile(true)}
-        onLogOut={() => setRole(null)}
+        onLogOut={handleLogOut}
       />
 
       {tab === "dashboard" && (
@@ -285,12 +322,14 @@ export default function App() {
           employees={employees}
           onSelectEmployee={setSelectedEmployee}
           onAddEmployee={handleAddEmployee}
+          onDeleteEmployee={handleDeleteEmployee}
         />
       )}
 
       {tab === "attendance" && (
         <Attendance
           role={role}
+          currentEmployee={loggedInEmployee}
           employees={employees}
           attendanceRecords={attendanceRecords}
           onCheckIn={handleCheckIn}
@@ -301,6 +340,8 @@ export default function App() {
       {tab === "timeoff" && (
         <TimeOff
           role={role}
+          currentEmployee={loggedInEmployee}
+          employees={employees}
           requests={leaveRequests}
           onApproveLeave={handleApproveLeave}
           onRejectLeave={handleRejectLeave}

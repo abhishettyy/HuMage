@@ -5,6 +5,14 @@
 
 const API_BASE_URL = "http://localhost:5000/api";
 
+function getAuthHeaders() {
+  const token = localStorage.getItem("dayflow_token");
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 export async function loginUser(loginId, password) {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -77,11 +85,8 @@ export async function resetPasswordApi(loginId, otp, newPassword) {
 
 export async function fetchEmployeesApi() {
   try {
-    const token = localStorage.getItem("dayflow_token");
     const res = await fetch(`${API_BASE_URL}/employees`, {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-      },
+      headers: getAuthHeaders(),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Failed to fetch employees");
@@ -94,13 +99,9 @@ export async function fetchEmployeesApi() {
 
 export async function createEmployeeApi(empData) {
   try {
-    const token = localStorage.getItem("dayflow_token");
     const res = await fetch(`${API_BASE_URL}/employees`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(empData),
     });
     const data = await res.json();
@@ -108,7 +109,22 @@ export async function createEmployeeApi(empData) {
     return data;
   } catch (err) {
     console.warn("API Offline / fallback for employee creation:", err.message);
-    return null;
+    throw err;
+  }
+}
+
+export async function deleteEmployeeApi(id) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/employees/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to delete employee");
+    return data;
+  } catch (err) {
+    console.warn("API Offline / fallback for employee deletion:", err.message);
+    return { success: true };
   }
 }
 
@@ -116,7 +132,7 @@ export async function checkInEmployee(employeeId = "OIMENA20240012") {
   try {
     const res = await fetch(`${API_BASE_URL}/attendance/check-in`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ employeeId }),
     });
     if (!res.ok) throw new Error("Check-in request failed");
@@ -132,7 +148,7 @@ export async function checkOutEmployee(employeeId = "OIMENA20240012") {
   try {
     const res = await fetch(`${API_BASE_URL}/attendance/check-out`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ employeeId }),
     });
     if (!res.ok) throw new Error("Check-out request failed");
@@ -146,7 +162,9 @@ export async function checkOutEmployee(employeeId = "OIMENA20240012") {
 
 export async function fetchSalaryConfig(employeeId = "OIMENA20240012") {
   try {
-    const res = await fetch(`${API_BASE_URL}/salary/${employeeId}`);
+    const res = await fetch(`${API_BASE_URL}/salary/${employeeId}`, {
+      headers: getAuthHeaders(),
+    });
     if (!res.ok) throw new Error("Failed to fetch salary config");
     return await res.json();
   } catch (err) {
@@ -159,7 +177,7 @@ export async function updateBaseWage(employeeId = "OIMENA20240012", wage = 50000
   try {
     const res = await fetch(`${API_BASE_URL}/salary/${employeeId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ wage }),
     });
     if (!res.ok) throw new Error("Failed to update base wage");
@@ -172,7 +190,9 @@ export async function updateBaseWage(employeeId = "OIMENA20240012", wage = 50000
 
 export async function fetchPayrollPipeline(employeeId = "OIMENA20240012") {
   try {
-    const res = await fetch(`${API_BASE_URL}/salary/${employeeId}/payroll-pipeline`);
+    const res = await fetch(`${API_BASE_URL}/salary/${employeeId}/payroll-pipeline`, {
+      headers: getAuthHeaders(),
+    });
     if (!res.ok) throw new Error("Failed to fetch payroll pipeline");
     return await res.json();
   } catch (err) {
@@ -185,7 +205,7 @@ export async function submitLeaveRequest(newReq) {
   try {
     const res = await fetch(`${API_BASE_URL}/leave/request`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(newReq),
     });
     if (!res.ok) throw new Error("Failed to submit leave request");
@@ -200,6 +220,7 @@ export async function approveLeaveRequest(id) {
   try {
     const res = await fetch(`${API_BASE_URL}/leave/${id}/approve`, {
       method: "PUT",
+      headers: getAuthHeaders(),
     });
     if (!res.ok) throw new Error("Failed to approve leave request");
     return await res.json();
@@ -213,6 +234,7 @@ export async function rejectLeaveRequest(id) {
   try {
     const res = await fetch(`${API_BASE_URL}/leave/${id}/reject`, {
       method: "PUT",
+      headers: getAuthHeaders(),
     });
     if (!res.ok) throw new Error("Failed to reject leave request");
     return await res.json();

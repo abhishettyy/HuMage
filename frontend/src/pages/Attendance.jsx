@@ -1,7 +1,7 @@
 import { useState } from "react";
 import CheckInRunway from "../components/CheckInRunway";
 
-export default function Attendance({ role, employees, attendanceRecords, onCheckIn, onCheckOut }) {
+export default function Attendance({ role, currentEmployee, employees, attendanceRecords, onCheckIn, onCheckOut }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentMonth, setCurrentMonth] = useState("October 2025");
 
@@ -11,7 +11,16 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
       e.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const meera = employees.find((e) => e.name === "Meera Nair") || employees[0];
+  const currentUser = currentEmployee || employees[0];
+  const userAttendanceRecords = attendanceRecords.filter((r) => r.employeeId === currentUser?.id);
+  const isUserCheckedIn = Boolean(currentUser?.checkIn);
+  const daysPresent = currentUser?.presentDays !== undefined
+    ? currentUser.presentDays
+    : userAttendanceRecords.length > 0
+    ? userAttendanceRecords.length
+    : isUserCheckedIn
+    ? 1
+    : 0;
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
@@ -22,7 +31,7 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
           <p className="text-xs text-slate-600 mt-0.5">
             {role === "admin"
               ? "All employees attendance log & working hours balance."
-              : "Your daily check-in runway and monthly log."}
+              : `Your daily check-in runway and monthly log (${currentUser?.name || "Employee"}).`}
           </p>
         </div>
 
@@ -75,14 +84,12 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
                 {filteredEmployees.map((e) => {
                   const empRecord = attendanceRecords.find((r) => r.employeeId === e.id) || null;
                   const isCheckedIn = Boolean(e.checkIn || empRecord?.checkIn);
-                  const isCheckedOut = Boolean(e.checkOut || empRecord?.checkOut);
 
                   const checkInTime = e.checkIn || empRecord?.checkIn || "—";
                   const checkOutTime = e.checkOut || empRecord?.checkOut || "—";
                   const workHours = empRecord?.workHours || (isCheckedIn ? "In Progress" : "00:00");
                   const extraHours = empRecord?.extraHours || "00:00";
 
-                  // Dynamic present days & leaves count calculation
                   const presentDays = e.presentDays !== undefined ? e.presentDays : isCheckedIn ? 1 : e.id.includes("OIMENA") ? 20 : 0;
                   const leavesCount = e.leavesCount !== undefined ? e.leavesCount : e.id.includes("OIMENA") ? 2 : 0;
                   const totalDays = 22;
@@ -110,10 +117,10 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
       ) : (
         <div className="max-w-3xl mx-auto space-y-6">
           <CheckInRunway
-            checkIn={meera.checkIn}
-            checkOut={meera.checkOut}
-            onCheckIn={onCheckIn}
-            onCheckOut={onCheckOut}
+            checkIn={currentUser?.checkIn}
+            checkOut={currentUser?.checkOut}
+            onCheckIn={() => onCheckIn(currentUser?.id)}
+            onCheckOut={() => onCheckOut(currentUser?.id)}
           />
 
           <div className="grid grid-cols-3 gap-3">
@@ -124,12 +131,14 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
             <div className="rounded-lg bg-teal-50/60 border border-teal-100 px-4 py-3">
               <p className="text-xs text-teal-800 font-medium">Days Present</p>
               <p className="text-xl font-bold font-mono text-teal-900 mt-1">
-                {attendanceRecords.filter((r) => r.employeeId === meera.id || r.checkIn).length || 20}
+                {daysPresent}
               </p>
             </div>
             <div className="rounded-lg bg-slate-50 border border-slate-100 px-4 py-3">
               <p className="text-xs text-slate-500">Approved Leaves</p>
-              <p className="text-xl font-bold font-mono text-slate-900 mt-1">2</p>
+              <p className="text-xl font-bold font-mono text-slate-900 mt-1">
+                {currentUser?.leavesCount || 0}
+              </p>
             </div>
           </div>
 
@@ -145,15 +154,23 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {attendanceRecords.map((r, idx) => (
-                  <tr key={r.id || idx} className="hover:bg-slate-50/50">
-                    <td className="px-4 py-2.5 font-mono text-slate-800">{r.date}</td>
-                    <td className="px-4 py-2.5 font-mono text-slate-600">{r.checkIn || "—"}</td>
-                    <td className="px-4 py-2.5 font-mono text-slate-600">{r.checkOut || "—"}</td>
-                    <td className="px-4 py-2.5 font-mono text-slate-600">{r.workHours}</td>
-                    <td className="px-4 py-2.5 font-mono text-slate-600">{r.extraHours}</td>
+                {userAttendanceRecords.length > 0 ? (
+                  userAttendanceRecords.map((r, idx) => (
+                    <tr key={r.id || idx} className="hover:bg-slate-50/50">
+                      <td className="px-4 py-2.5 font-mono text-slate-800">{r.date}</td>
+                      <td className="px-4 py-2.5 font-mono text-slate-600">{r.checkIn || "—"}</td>
+                      <td className="px-4 py-2.5 font-mono text-slate-600">{r.checkOut || "—"}</td>
+                      <td className="px-4 py-2.5 font-mono text-slate-600">{r.workHours}</td>
+                      <td className="px-4 py-2.5 font-mono text-slate-600">{r.extraHours}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                      No attendance check-ins recorded for this month yet. Click "Check In" above to start your flight!
+                    </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

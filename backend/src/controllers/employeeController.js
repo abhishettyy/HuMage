@@ -4,7 +4,7 @@ import { generateLoginId, generateInitialPassword } from '../utils/idGenerator.j
 
 /**
  * @route   POST /api/employees
- * @desc    Onboard New Employee (Auto Login ID & Password Generation)
+ * @desc    Onboard New Employee or Admin Account (Auto Login ID & Password Generation)
  * @access  Admin Only
  */
 export const createEmployee = async (req, res) => {
@@ -15,6 +15,7 @@ export const createEmployee = async (req, res) => {
       email,
       department,
       jobPosition,
+      role: requestedRoleInput = 'EMPLOYEE',
       joiningYear = new Date().getFullYear(),
       joiningDate = new Date().toISOString().split('T')[0],
       managerName = 'Priya Shah',
@@ -32,14 +33,24 @@ export const createEmployee = async (req, res) => {
       });
     }
 
-    // Check if email already exists
-    const existingEmail = await query(`SELECT id FROM users WHERE email = $1`, [email.toLowerCase().trim()]);
-    if (existingEmail.rows.length > 0) {
-      return res.status(400).json({
-        error: 'Conflict Error',
-        message: `An account with email ${email} already exists.`
-      });
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Check if email already exists in users database table
+    const existingUserRes = await query(
+      `SELECT u.id, e.id as emp_id FROM users u LEFT JOIN employees e ON e.user_id = u.id WHERE LOWER(u.email) = $1`,
+      [cleanEmail]
+    );
+
+    if (existingUserRes.rows.length > 0) {
+      // Clean up previous user record so re-onboarding with clean credentials succeeds seamlessly
+      const oldUserId = existingUserRes.rows[0].id;
+      await query(`DELETE FROM users WHERE id = $1`, [oldUserId]);
     }
+
+    // Determine target role (Super Admin can create ADMIN or EMPLOYEE, Normal Admin creates EMPLOYEE)
+    const requestedRole = requestedRoleInput.toUpperCase();
+    const isSuperAdmin = req.user && (req.user.loginId === 'admin' || req.user.role === 'ADMIN');
+    const targetRole = (requestedRole === 'ADMIN' && isSuperAdmin) ? 'ADMIN' : 'EMPLOYEE';
 
     // 2. Auto-Generate Login ID & Initial Password
     const loginId = await generateLoginId(firstName, lastName, parseInt(joiningYear, 10));
@@ -53,7 +64,7 @@ export const createEmployee = async (req, res) => {
       `INSERT INTO users (login_id, email, password_hash, role, company_prefix)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id, login_id, email, role`,
-      [loginId, email.toLowerCase().trim(), passwordHash, 'EMPLOYEE', 'OI']
+      [loginId, cleanEmail, passwordHash, targetRole, 'OI']
     );
 
     const newUser = userRes.rows[0];
@@ -114,15 +125,18 @@ export const createEmployee = async (req, res) => {
     );
 
     // Audit log
-    await query(
-      `INSERT INTO audit_logs (user_id, action) VALUES ($1, $2)`,
-      [req.user.userId, `Created new employee ${fullName} with Login ID ${loginId}`]
-    );
+    if (req.user) {
+      await query(
+        `INSERT INTO audit_logs (user_id, action) VALUES ($1, $2)`,
+        [req.user.userId, `Created new ${targetRole} account ${fullName} (${loginId})`]
+      );
+    }
 
     res.status(201).json({
-      message: 'Employee created successfully',
+      message: `${targetRole === 'ADMIN' ? 'Company Admin' : 'Employee'} created successfully`,
       loginId,
       initialPassword,
+      assignedRole: targetRole,
       employee: {
         id: newEmp.id,
         empCode: loginId,
@@ -132,7 +146,8 @@ export const createEmployee = async (req, res) => {
         department: newEmp.department,
         jobPosition: newEmp.job_position,
         joiningDate: newEmp.joining_date,
-        avatarUrl: newEmp.avatar_url
+        avatarUrl: newEmp.avatar_url,
+        role: targetRole
       }
     });
 
@@ -140,7 +155,7 @@ export const createEmployee = async (req, res) => {
     console.error('❌ Create Employee Error:', error);
     res.status(500).json({
       error: 'Server Error',
-      message: error.message || 'Failed to onboarding new employee.'
+      message: error.message || 'Failed to onboard new account.'
     });
   }
 };
@@ -157,21 +172,22 @@ export const getAllEmployees = async (req, res) => {
     const employeesResult = await query(
       `SELECT e.id, e.emp_code, e.name, e.department, e.job_position, e.location, e.avatar_url,
               a.check_in, a.check_out, a.status as attendance_status,
-              lr.id as active_leave_id
+              lr.id as active_leave_id,
+              u.role
        FROM employees e
-       LEFT JOIN attendance a ON a.employee_id = e.id AND a.date = $1
-       LEFT JOIN leave_requests lr ON lr.employee_id = e.id AND lr.status = 'APPROVED' AND $1 BETWEEN lr.start_date AND lr.end_date
+       JOIN users u ON u.id = e.user_id
+       LEFT JOIN attendance a ON a.employee_id = e.id AND a.date = $1::date
+       LEFT JOIN leave_requests lr ON lr.employee_id = e.id AND lr.status = 'APPROVED' AND $1::date BETWEEN lr.start_date AND lr.end_date
        ORDER BY e.created_at DESC`,
       [todayStr]
     );
 
     const employees = employeesResult.rows.map(emp => {
-      // Status Dot Logic: PRESENT (🟢 Boarding), ON_LEAVE (✈️ In Transit), ABSENT (🟡 Delayed)
-      let status = 'ABSENT'; // Default Yellow / Delayed
+      let status = 'ABSENT';
       if (emp.active_leave_id) {
-        status = 'ON_LEAVE'; // Airplane icon / In Transit
+        status = 'ON_LEAVE';
       } else if (emp.check_in) {
-        status = 'PRESENT';  // Green dot / Boarding
+        status = 'PRESENT';
       }
 
       return {
@@ -184,7 +200,8 @@ export const getAllEmployees = async (req, res) => {
         avatarUrl: emp.avatar_url,
         checkIn: emp.check_in ? new Date(emp.check_in).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : null,
         checkOut: emp.check_out ? new Date(emp.check_out).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : null,
-        status // PRESENT | ON_LEAVE | ABSENT
+        status,
+        role: emp.role
       };
     });
 
@@ -211,7 +228,7 @@ export const getEmployeeById = async (req, res) => {
       `SELECT e.*, u.email as work_email, u.role
        FROM employees e
        JOIN users u ON u.id = e.user_id
-       WHERE e.id = $1`,
+       WHERE e.id::text = $1 OR UPPER(e.emp_code) = UPPER($1)`,
       [id]
     );
 
@@ -224,8 +241,6 @@ export const getEmployeeById = async (req, res) => {
 
     const emp = result.rows[0];
 
-    // RBAC Field Masking Rule:
-    // Private Info & Bank Details visible ONLY if user is ADMIN or viewing their OWN profile
     const isSelfOrAdmin = req.user.role === 'ADMIN' || req.user.employeeId === emp.id;
 
     const profileData = {
@@ -244,15 +259,14 @@ export const getEmployeeById = async (req, res) => {
       location: emp.location,
       avatarUrl: emp.avatar_url,
       workEmail: emp.work_email,
+      role: emp.role,
 
-      // Resume Info (Public within company)
       resumeInfo: {
         aboutText: emp.about_text,
         skills: emp.skills || [],
         certifications: emp.certifications || []
       },
 
-      // Private & Financial Details (Masked if not Admin / Self)
       privateInfo: isSelfOrAdmin ? {
         dob: emp.dob,
         residingAddress: emp.residing_address,
@@ -291,7 +305,6 @@ export const updateEmployee = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // RBAC Check: Must be Self or Admin
     if (req.user.role !== 'ADMIN' && req.user.employeeId !== id) {
       return res.status(403).json({
         error: 'Forbidden',
@@ -324,7 +337,7 @@ export const updateEmployee = async (req, res) => {
          bank_name = COALESCE($15, bank_name),
          ifsc_code = COALESCE($16, ifsc_code),
          updated_at = NOW()
-       WHERE id = $17
+       WHERE id::text = $17 OR UPPER(emp_code) = UPPER($17)
        RETURNING *`,
       [
         phone, location, aboutText, skills, certifications,
@@ -349,5 +362,45 @@ export const updateEmployee = async (req, res) => {
       error: 'Server Error',
       message: 'Failed to update employee profile.'
     });
+  }
+};
+
+/**
+ * @route   DELETE /api/employees/:id
+ * @desc    Delete Employee Record (Admin Only, Cascades to User, Attendance, Leave & Salary)
+ * @access  Admin Only
+ */
+export const deleteEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const empRes = await query(
+      `SELECT e.id, e.user_id, e.name, e.emp_code FROM employees e WHERE e.id::text = $1 OR UPPER(e.emp_code) = UPPER($1)`,
+      [id]
+    );
+
+    if (empRes.rows.length > 0) {
+      const emp = empRes.rows[0];
+      await query(`DELETE FROM users WHERE id = $1`, [emp.user_id]);
+    } else {
+      await query(`DELETE FROM users WHERE LOWER(email) = LOWER($1) OR id::text = $1 OR UPPER(login_id) = UPPER($1)`, [id]);
+    }
+
+    if (req.user) {
+      await query(
+        `INSERT INTO audit_logs (user_id, action) VALUES ($1, $2)`,
+        [req.user.userId, `Deleted employee record (${id})`]
+      );
+    }
+
+    res.json({
+      success: true,
+      message: `Employee record ${id} deleted successfully from database.`,
+      deletedId: id
+    });
+
+  } catch (error) {
+    console.error("❌ Delete Employee Error:", error);
+    res.status(500).json({ error: "Server Error", message: "Failed to delete employee record." });
   }
 };
