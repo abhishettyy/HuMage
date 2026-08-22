@@ -13,6 +13,7 @@ import {
   initialAttendanceRecords,
   STATUS,
 } from "./data/mockData";
+import { checkInEmployee, checkOutEmployee, updateBaseWage } from "./services/api";
 
 export default function App() {
   const [role, setRole] = useState(null); // null | "admin" | "employee"
@@ -39,8 +40,10 @@ export default function App() {
     showToast("Profile Updated", `Saved profile changes for ${updatedEmp.name}`);
   };
 
-  const handleCheckIn = () => {
-    const timeStr = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  const handleCheckIn = async () => {
+    const apiRes = await checkInEmployee("OIMENA20240012");
+    const timeStr = apiRes?.checkIn || new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+
     setEmployees((prev) =>
       prev.map((e) =>
         e.name === "Meera Nair"
@@ -48,14 +51,40 @@ export default function App() {
           : e
       )
     );
+
+    // Add to attendance log table
+    setAttendanceRecords((prev) => [
+      {
+        employeeId: "OIMENA20240012",
+        name: "Meera Nair",
+        date: new Date().toLocaleDateString("en-GB"),
+        checkIn: timeStr,
+        checkOut: null,
+        workHours: "In Progress",
+        extraHours: "00:00",
+      },
+      ...prev,
+    ]);
+
     showToast("Checked In", `Check-in recorded at ${timeStr}. Flight status set to Boarding.`);
   };
 
-  const handleCheckOut = () => {
-    const timeStr = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  const handleCheckOut = async () => {
+    const apiRes = await checkOutEmployee("OIMENA20240012");
+    const timeStr = apiRes?.checkOut || new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+
     setEmployees((prev) =>
       prev.map((e) => (e.name === "Meera Nair" ? { ...e, checkOut: timeStr } : e))
     );
+
+    setAttendanceRecords((prev) =>
+      prev.map((r, i) =>
+        i === 0 && r.employeeId === "OIMENA20240012"
+          ? { ...r, checkOut: timeStr, workHours: `${apiRes?.workHours || 8.85} hrs`, extraHours: `${apiRes?.extraHours || 0.85} hrs` }
+          : r
+      )
+    );
+
     showToast("Checked Out", `Check-out recorded at ${timeStr}. Day landing completed.`);
   };
 
