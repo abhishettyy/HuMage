@@ -12,7 +12,7 @@ export async function seedDatabase() {
       CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
       DO $$ BEGIN
-        CREATE TYPE user_role AS ENUM ('ADMIN', 'EMPLOYEE');
+        CREATE TYPE user_role AS ENUM ('ADMIN', 'HR_OFFICER', 'EMPLOYEE');
       EXCEPTION WHEN duplicate_object THEN null; END $$;
 
       DO $$ BEGIN

@@ -4,9 +4,37 @@ const formatINR = (n) =>
 export default function PayslipModal({ employee, salary, onClose }) {
   if (!employee || !salary) return null;
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200 my-8">
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #printable-payslip, #printable-payslip * {
+            visibility: visible;
+          }
+          #printable-payslip {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 20px;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      <div id="printable-payslip" className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200 my-8">
         {/* Header Bar */}
         <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -16,14 +44,15 @@ export default function PayslipModal({ employee, salary, onClose }) {
               <p className="text-[11px] text-slate-400 font-mono">OFFICIAL PAYSLIP STATEMENT</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 no-print">
             <button
-              onClick={() => window.print()}
-              className="text-xs bg-teal-600 hover:bg-teal-700 text-white font-medium px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-colors"
+              type="button"
+              onClick={handlePrint}
+              className="text-xs bg-teal-600 hover:bg-teal-700 text-white font-semibold px-3.5 py-1.5 rounded-md flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <i className="ti ti-printer text-sm" aria-hidden="true"></i> Print / PDF
+              <i className="ti ti-printer text-sm" aria-hidden="true"></i> Print / Save PDF
             </button>
-            <button onClick={onClose} className="text-slate-400 hover:text-white">
+            <button type="button" onClick={onClose} className="text-slate-400 hover:text-white cursor-pointer">
               <i className="ti ti-x text-lg" aria-hidden="true"></i>
             </button>
           </div>

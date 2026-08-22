@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none">
+  <rect width="120" height="120" rx="16" fill="#F3F4F6"/>
+  <path d="M60 30L85.9808 45V75L60 90L34.0192 75V45L60 30Z" fill="#D1D5DB"/>
+  <path d="M60 40L77.3205 50V70L60 80L42.6795 70V50L60 40Z" fill="#9CA3AF"/>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#4B5563" font-family="sans-serif" font-weight="bold" font-size="14">LOGO</text>
+</svg>

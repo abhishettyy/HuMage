@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NavBar from "./layout/NavBar";
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
@@ -15,22 +15,141 @@ import {
   STATUS,
 } from "./data/mockData";
 import {
+  fetchEmployeesApi,
   checkInEmployee,
   checkOutEmployee,
+  deleteEmployeeApi,
   submitLeaveRequest,
   approveLeaveRequest,
   rejectLeaveRequest,
 } from "./services/api";
 
 export default function App() {
-  const [role, setRole] = useState(null); // null | "admin" | "employee"
+  // Session persistence across page refreshes
+  const [role, setRole] = useState(() => {
+    try {
+      return localStorage.getItem("dayflow_role") || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [loggedInEmpCode, setLoggedInEmpCode] = useState(() => {
+    try {
+      return localStorage.getItem("dayflow_emp_code") || null;
+    } catch {
+      return null;
+    }
+  });
+
   const [tab, setTab] = useState("dashboard");
-  const [employees, setEmployees] = useState(initialEmployees);
-  const [leaveRequests, setLeaveRequests] = useState(initialLeaveRequests);
-  const [attendanceRecords, setAttendanceRecords] = useState(initialAttendanceRecords);
+
+  // LocalStorage persistent state managers
+  const [employees, setEmployees] = useState(() => {
+    try {
+      const saved = localStorage.getItem("dayflow_employees");
+      return saved ? JSON.parse(saved) : initialEmployees;
+    } catch {
+      return initialEmployees;
+    }
+  });
+
+  const [leaveRequests, setLeaveRequests] = useState(() => {
+    try {
+      const saved = localStorage.getItem("dayflow_leave_requests");
+      return saved ? JSON.parse(saved) : initialLeaveRequests;
+    } catch {
+      return initialLeaveRequests;
+    }
+  });
+
+  const [attendanceRecords, setAttendanceRecords] = useState(() => {
+    try {
+      const saved = localStorage.getItem("dayflow_attendance");
+      return saved ? JSON.parse(saved) : initialAttendanceRecords;
+    } catch {
+      return initialAttendanceRecords;
+    }
+  });
+
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isSelfProfile, setIsSelfProfile] = useState(false);
   const [toast, setToast] = useState(null);
+
+  const loggedInEmployee = employees.find((e) => e.id === loggedInEmpCode) || employees[0];
+  const isSuperAdmin = Boolean(loggedInEmpCode === "admin" || (role === "admin" && (!loggedInEmpCode || loggedInEmpCode === "admin")));
+
+  const handleSignIn = (selectedRole, empCode) => {
+    setRole(selectedRole);
+    if (empCode) setLoggedInEmpCode(empCode);
+    try {
+      localStorage.setItem("dayflow_role", selectedRole);
+      if (empCode) localStorage.setItem("dayflow_emp_code", empCode);
+    } catch {
+      // fallback
+    }
+  };
+
+  const handleLogOut = () => {
+    setRole(null);
+    setLoggedInEmpCode(null);
+    try {
+      localStorage.removeItem("dayflow_role");
+      localStorage.removeItem("dayflow_emp_code");
+      localStorage.removeItem("dayflow_token");
+    } catch {
+      // fallback
+    }
+    setSelectedEmployee(null);
+    setIsSelfProfile(false);
+  };
+
+  // Fetch employees directly from Supabase DB via Node.js API when authenticated
+  useEffect(() => {
+    if (role) {
+      fetchEmployeesApi().then((dbEmployees) => {
+        if (dbEmployees && dbEmployees.length > 0) {
+          setEmployees((prev) => {
+            const dbMapped = dbEmployees.map((d) => ({
+              id: d.empCode || d.id,
+              name: d.name,
+              firstName: d.name.split(" ")[0],
+              lastName: d.name.split(" ")[1] || "",
+              department: d.department,
+              jobPosition: d.jobPosition,
+              manager: "Arjun Verma",
+              email: d.empCode ? `${d.empCode.toLowerCase()}@dayflow.io` : "employee@dayflow.io",
+              mobile: "+91 98765 43210",
+              location: d.location || "Bengaluru",
+              joiningDate: new Date().toISOString().split("T")[0],
+              status: d.status === "PRESENT" ? STATUS.BOARDING : d.status === "ON_LEAVE" ? STATUS.IN_TRANSIT : STATUS.DELAYED,
+              checkIn: d.checkIn,
+              checkOut: d.checkOut,
+              wage: 50000,
+              role: d.role
+            }));
+
+            const existingIds = new Set(dbMapped.map((e) => e.id));
+            const localOnly = prev.filter((e) => !existingIds.has(e.id));
+            return [...dbMapped, ...localOnly];
+          });
+        }
+      });
+    }
+  }, [role]);
+
+  // Sync state to LocalStorage
+  useEffect(() => {
+    localStorage.setItem("dayflow_employees", JSON.stringify(employees));
+  }, [employees]);
+
+  useEffect(() => {
+    localStorage.setItem("dayflow_leave_requests", JSON.stringify(leaveRequests));
+  }, [leaveRequests]);
+
+  useEffect(() => {
+    localStorage.setItem("dayflow_attendance", JSON.stringify(attendanceRecords));
+  }, [attendanceRecords]);
 
   const showToast = (title, message) => {
     setToast({ title, message });
@@ -39,7 +158,21 @@ export default function App() {
 
   const handleAddEmployee = (newEmp) => {
     setEmployees((prev) => [newEmp, ...prev]);
-    showToast("Employee Created", `Generated Login ID ${newEmp.id} for ${newEmp.name}`);
+    showToast("Account Created", `Generated Login ID ${newEmp.id} for ${newEmp.name} (${newEmp.role || 'EMPLOYEE'})`);
+  };
+
+  const handleDeleteEmployee = async (id) => {
+    const emp = employees.find((e) => e.id === id);
+    setEmployees((prev) => prev.filter((e) => e.id !== id));
+    if (emp) {
+      showToast("Employee Deleted", `Deleted employee record for ${emp.name} (${id})`);
+    }
+
+    try {
+      await deleteEmployeeApi(id);
+    } catch (err) {
+      console.warn("Supabase DB delete sync error:", err.message);
+    }
   };
 
   const handleUpdateEmployee = (updatedEmp) => {
@@ -47,25 +180,25 @@ export default function App() {
     showToast("Profile Updated", `Saved profile changes for ${updatedEmp.name}`);
   };
 
-  const handleCheckIn = async () => {
-    const currentUser = role === "admin" ? employees[2] : employees[0];
-    const currentId = currentUser?.id;
+  const handleCheckIn = async (targetId) => {
+    const empId = targetId || loggedInEmployee.id;
+    const emp = employees.find((e) => e.id === empId) || loggedInEmployee;
 
-    const apiRes = await checkInEmployee(currentId);
+    const apiRes = await checkInEmployee(emp.id);
     const timeStr = apiRes?.checkIn || new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 
     setEmployees((prev) =>
       prev.map((e) =>
-        e.id === currentId
-          ? { ...e, status: STATUS.PRESENT, checkIn: timeStr }
+        e.id === emp.id
+          ? { ...e, status: STATUS.PRESENT, checkIn: timeStr, presentDays: (e.presentDays || 0) + 1 }
           : e
       )
     );
-    // Add to attendance log table
+
     setAttendanceRecords((prev) => [
       {
-        employeeId: currentId,
-        name: currentUser?.name || "Employee",
+        employeeId: emp.id,
+        name: emp.name,
         date: new Date().toLocaleDateString("en-GB"),
         checkIn: timeStr,
         checkOut: null,
@@ -78,26 +211,26 @@ export default function App() {
     showToast("Checked In", `Check-in recorded at ${timeStr}. Status set to Present.`);
   };
 
-  const handleCheckOut = async () => {
-    const currentUser = role === "admin" ? employees[2] : employees[0];
-    const currentId = currentUser?.id;
+  const handleCheckOut = async (targetId) => {
+    const empId = targetId || loggedInEmployee.id;
+    const emp = employees.find((e) => e.id === empId) || loggedInEmployee;
 
-    const apiRes = await checkOutEmployee(currentId);
+    const apiRes = await checkOutEmployee(emp.id);
     const timeStr = apiRes?.checkOut || new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 
     setEmployees((prev) =>
-      prev.map((e) => (e.id === currentId ? { ...e, checkOut: timeStr } : e))
+      prev.map((e) => (e.id === emp.id ? { ...e, checkOut: timeStr } : e))
     );
 
     setAttendanceRecords((prev) =>
       prev.map((r, i) =>
-        r.employeeId === currentId && r.checkOut === null
+        i === 0 && r.employeeId === emp.id
           ? { ...r, checkOut: timeStr, workHours: `${apiRes?.workHours || 8.85} hrs`, extraHours: `${apiRes?.extraHours || 0.85} hrs` }
           : r
       )
     );
 
-    showToast("Checked Out", `Check-out recorded at ${timeStr}. Day landing completed.`);
+    showToast("Checked Out", `Check-out recorded at ${timeStr} for ${emp.name}. Day landing completed.`);
   };
 
   const handleApproveLeave = async (id) => {
@@ -107,7 +240,6 @@ export default function App() {
       prev.map((r) => (r.id === id ? { ...r, status: "Approved" } : r))
     );
 
-    // Update employee status to In Transit
     if (req) {
       setEmployees((prev) =>
         prev.map((e) => (e.id === req.employeeId ? { ...e, status: STATUS.ON_LEAVE } : e))
@@ -133,7 +265,7 @@ export default function App() {
   const handleSubmitLeave = async (newReq) => {
     await submitLeaveRequest(newReq);
     setLeaveRequests((prev) => [newReq, ...prev]);
-    showToast("Leave Request Submitted", "Your request is pending Admin/HR review.");
+    showToast("Leave Request Submitted", `Leave request for ${newReq.name} submitted for Admin/HR review.`);
   };
 
   if (!role) {
@@ -143,13 +275,12 @@ export default function App() {
     }} />;
   }
 
-  // Viewing a specific employee or self profile
   if (selectedEmployee || isSelfProfile) {
     const currentEmployee = role === "admin" ? employees[2] : employees[0];
     const targetEmp = isSelfProfile
       ? role === "admin"
-        ? employees[2] // Priya Shah / HR Admin
-        : employees[0] // Meera Nair
+        ? employees[2] || employees[0]
+        : loggedInEmployee
       : selectedEmployee;
 
     return (
@@ -166,9 +297,9 @@ export default function App() {
             setSelectedEmployee(null);
             setIsSelfProfile(true);
           }}
-          onCheckIn={handleCheckIn}
-          onCheckOut={handleCheckOut}
-          employee={currentEmployee}
+          onCheckIn={() => handleCheckIn(targetEmp?.id)}
+          onCheckOut={() => handleCheckOut(targetEmp?.id)}
+          employee={targetEmp}
           onLogOut={() => {
             setRole(null);
             setSelectedEmployee(null);
@@ -198,17 +329,19 @@ export default function App() {
         role={role}
         onOpenSelfProfile={() => setIsSelfProfile(true)}
         onLogOut={() => setRole(null)}
-        onCheckIn={handleCheckIn}
-        onCheckOut={handleCheckOut}
-        employee={role === "admin" ? employees[2] : employees[0]}
+        onCheckIn={() => handleCheckIn(loggedInEmployee?.id)}
+        onCheckOut={() => handleCheckOut(loggedInEmployee?.id)}
+        employee={loggedInEmployee}
       />
 
       {tab === "dashboard" && role === "admin" && (
         <Dashboard
           role={role}
+          isSuperAdmin={isSuperAdmin}
           employees={employees}
           onSelectEmployee={setSelectedEmployee}
           onAddEmployee={handleAddEmployee}
+          onDeleteEmployee={handleDeleteEmployee}
         />
       )}
 
@@ -227,6 +360,7 @@ export default function App() {
       {tab === "attendance" && (
         <Attendance
           role={role}
+          currentEmployee={loggedInEmployee}
           employees={employees}
           attendanceRecords={attendanceRecords}
           onCheckIn={handleCheckIn}
@@ -238,6 +372,8 @@ export default function App() {
         <TimeOff
           role={role}
           employee={employees.find(e => e.name === "Meera Nair")}
+          currentEmployee={loggedInEmployee}
+          employees={employees}
           requests={leaveRequests}
           onApproveLeave={handleApproveLeave}
           onRejectLeave={handleRejectLeave}
