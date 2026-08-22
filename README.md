@@ -1,4 +1,4 @@
-# ✈️ Dayflow — Human Resource Management System (HRMS)
+#  Dayflow — Human Resource Management System (HRMS)
 
 > **"Every workday, perfectly aligned."**  
 > *A role-based, multi-tenant SaaS HRMS built around an interconnected operational pipeline.*
