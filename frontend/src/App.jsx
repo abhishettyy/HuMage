@@ -78,7 +78,7 @@ export default function App() {
   // STRICT SUPER ADMIN CHECK: Only login_id === 'admin' is Root Super Admin
   const isSuperAdmin = Boolean(loggedInEmpCode && loggedInEmpCode.toLowerCase() === "admin");
 
-  // Resolve currently logged in employee object
+  // Resolve currently logged in employee object dynamically
   const loggedInEmployee = employees.find((e) => e.id === loggedInEmpCode) || {
     id: loggedInEmpCode || "OIUSER2026",
     name: loggedInEmpCode === "admin" ? "Root Super Admin" : `User (${loggedInEmpCode || "Emp"})`,
@@ -306,6 +306,7 @@ export default function App() {
             setTab(t);
           }}
           role={role}
+          currentEmployee={loggedInEmployee}
           onOpenSelfProfile={() => {
             setSelectedEmployee(null);
             setIsSelfProfile(true);
@@ -332,6 +333,7 @@ export default function App() {
         active={tab}
         onNavigate={setTab}
         role={role}
+        currentEmployee={loggedInEmployee}
         onOpenSelfProfile={() => setIsSelfProfile(true)}
         onLogOut={handleLogOut}
       />
