@@ -96,6 +96,7 @@ export default function TimeOff({
 
       <DeparturesBoard
         role={role}
+        showActions={role === "admin"}
         requests={requests}
         onApprove={onApproveLeave}
         onReject={onRejectLeave}
