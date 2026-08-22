@@ -1,7 +1,7 @@
 import { useState } from "react";
 import CheckInRunway from "../components/CheckInRunway";
 
-export default function Attendance({ role, currentEmployee, employees, attendanceRecords, onCheckIn, onCheckOut }) {
+export default function Attendance({ role, isSuperAdmin = false, currentEmployee, employees, attendanceRecords, onCheckIn, onCheckOut }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentMonth, setCurrentMonth] = useState("October 2025");
 
@@ -30,7 +30,9 @@ export default function Attendance({ role, currentEmployee, employees, attendanc
           <h1 className="text-xl font-semibold text-slate-900">Attendance</h1>
           <p className="text-xs text-slate-600 mt-0.5">
             {role === "admin"
-              ? "All employees attendance log & working hours balance."
+              ? isSuperAdmin
+                ? "Workforce attendance log & real-time presence control tower."
+                : "Workforce attendance log & personal HR check-in runway."
               : `Your daily check-in runway and monthly log (${currentUser?.name || "Employee"}).`}
           </p>
         </div>
@@ -53,7 +55,22 @@ export default function Attendance({ role, currentEmployee, employees, attendanc
       </div>
 
       {role === "admin" ? (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* HR / Company Admin Personal Attendance Check-In Runway (Hidden for Super Admin) */}
+          {!isSuperAdmin && (
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                My HR Admin Attendance Runway ({currentUser?.name || "Company Admin"})
+              </h2>
+              <CheckInRunway
+                checkIn={currentUser?.checkIn}
+                checkOut={currentUser?.checkOut}
+                onCheckIn={() => onCheckIn(currentUser?.id)}
+                onCheckOut={() => onCheckOut(currentUser?.id)}
+              />
+            </div>
+          )}
+
           <div className="flex justify-between items-center">
             <div className="relative w-full sm:w-72">
               <i className="ti ti-search absolute left-3 top-2.5 text-slate-400 text-sm" aria-hidden="true"></i>

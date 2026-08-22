@@ -27,15 +27,19 @@ export default function SignIn({ onSignIn }) {
       const data = await loginUser(loginId, password);
       if (data && data.user) {
         const userRole = (data.user.role || "").toLowerCase() === "admin" ? "admin" : "employee";
-        onSignIn(userRole);
+        const actualLoginId = data.user.loginId || loginId.trim();
+        onSignIn(userRole, actualLoginId);
       } else {
-        onSignIn(loginId.toLowerCase().includes("admin") ? "admin" : "employee");
+        const fallbackRole = loginId.trim().toLowerCase() === "admin" || loginId.toLowerCase().includes("admin") ? "admin" : "employee";
+        onSignIn(fallbackRole, loginId.trim());
       }
     } catch (err) {
       if (err.message && err.message.includes("Invalid")) {
         setError("Invalid Login ID or Password. Please check credentials.");
       } else {
-        onSignIn(loginId.toLowerCase().includes("admin") ? "admin" : "employee");
+        // Fallback offline sign in
+        const fallbackRole = loginId.trim().toLowerCase() === "admin" || loginId.toLowerCase().includes("admin") ? "admin" : "employee";
+        onSignIn(fallbackRole, loginId.trim());
       }
     } finally {
       setLoading(false);
@@ -109,7 +113,7 @@ export default function SignIn({ onSignIn }) {
                   setResetId(loginId);
                   setShowForgotModal(true);
                 }}
-                className="text-[11px] text-teal-700 hover:underline font-medium"
+                className="text-[11px] text-teal-700 hover:underline font-medium cursor-pointer"
               >
                 Forgot password?
               </button>
@@ -133,7 +137,7 @@ export default function SignIn({ onSignIn }) {
 
         <div className="mt-5 pt-4 border-t border-slate-100 text-[11px] text-slate-500 space-y-1">
           <p className="font-semibold text-slate-700">Seeded Credentials:</p>
-          <p>• Admin: <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-900 font-mono">admin</code> / <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-900 font-mono">Dayflow@2026</code></p>
+          <p>• Super Admin: <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-900 font-mono">admin</code> / <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-900 font-mono">Dayflow@2026</code></p>
           <p>• Employee: <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-900 font-mono">OIMENA20240012</code> / <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-900 font-mono">Dayflow@2026</code></p>
         </div>
       </div>
@@ -176,7 +180,7 @@ export default function SignIn({ onSignIn }) {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-teal-600 text-white font-medium py-2 rounded-md hover:bg-teal-700 transition-colors"
+                  className="w-full bg-teal-600 text-white font-medium py-2 rounded-md hover:bg-teal-700 transition-colors cursor-pointer"
                 >
                   Request Reset OTP
                 </button>
@@ -212,7 +216,7 @@ export default function SignIn({ onSignIn }) {
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-slate-900 text-white font-medium py-2 rounded-md hover:bg-slate-800 transition-colors"
+                  className="w-full bg-slate-900 text-white font-medium py-2 rounded-md hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Set New Password
                 </button>

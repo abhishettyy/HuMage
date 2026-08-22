@@ -212,7 +212,9 @@ export default function EmployeeInfo({ employee, isSelfView = false, onBack, onU
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-semibold text-slate-900">Resume Document (Bucket Storage)</h3>
-                <p className="text-[11px] text-slate-500">Upload PDF or DOCX file (Max Size: 1 MB limit).</p>
+                <p className="text-[11px] text-slate-500">
+                  {isSelfView ? "Upload PDF or DOCX file (Max Size: 1 MB limit)." : "Employee uploaded resume document."}
+                </p>
               </div>
               {resumeUrl && (
                 <a
@@ -231,19 +233,21 @@ export default function EmployeeInfo({ employee, isSelfView = false, onBack, onU
               </div>
             )}
 
-            <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center bg-slate-50/50 hover:bg-slate-50 transition-colors">
-              <i className="ti ti-file-upload text-slate-400 text-2xl mb-1 block" aria-hidden="true"></i>
-              <label className="cursor-pointer text-xs font-semibold text-teal-700 hover:text-teal-900">
-                Click to upload resume file (Max 1 MB)
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleResumeUpload}
-                  className="hidden"
-                />
-              </label>
-              <p className="text-[10px] text-slate-400 mt-1">Enforces strict 1 MB file size boundary.</p>
-            </div>
+            {isSelfView && (
+              <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <i className="ti ti-file-upload text-slate-400 text-2xl mb-1 block" aria-hidden="true"></i>
+                <label className="cursor-pointer text-xs font-semibold text-teal-700 hover:text-teal-900">
+                  Click to upload resume file (Max 1 MB)
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleResumeUpload}
+                    className="hidden"
+                  />
+                </label>
+                <p className="text-[10px] text-slate-400 mt-1">Enforces strict 1 MB file size boundary.</p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-xs">
@@ -267,20 +271,22 @@ export default function EmployeeInfo({ employee, isSelfView = false, onBack, onU
                   </span>
                 ))}
               </div>
-              <form onSubmit={handleAddSkill} className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
-                <input
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  placeholder="+ Add skill"
-                  className="flex-1 border border-slate-200 rounded px-2 py-1 text-xs"
-                />
-                <button
-                  type="submit"
-                  className="text-xs bg-teal-600 text-white px-2.5 py-1 rounded font-medium hover:bg-teal-700 cursor-pointer"
-                >
-                  Add
-                </button>
-              </form>
+              {isSelfView && (
+                <form onSubmit={handleAddSkill} className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
+                  <input
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    placeholder="+ Add skill"
+                    className="flex-1 border border-slate-200 rounded px-2 py-1 text-xs"
+                  />
+                  <button
+                    type="submit"
+                    className="text-xs bg-teal-600 text-white px-2.5 py-1 rounded font-medium hover:bg-teal-700 cursor-pointer"
+                  >
+                    Add
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </div>
@@ -291,15 +297,17 @@ export default function EmployeeInfo({ employee, isSelfView = false, onBack, onU
         <div className="space-y-6 text-xs">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Personal & Statutory Info</h3>
-            <button
-              onClick={() => setIsEditingPrivate(!isEditingPrivate)}
-              className="text-xs font-medium text-teal-700 hover:text-teal-900 border border-teal-200 px-3 py-1 rounded-md bg-teal-50 cursor-pointer"
-            >
-              {isEditingPrivate ? "Cancel Editing" : "Edit Private Info"}
-            </button>
+            {isSelfView && (
+              <button
+                onClick={() => setIsEditingPrivate(!isEditingPrivate)}
+                className="text-xs font-medium text-teal-700 hover:text-teal-900 border border-teal-200 px-3 py-1 rounded-md bg-teal-50 cursor-pointer"
+              >
+                {isEditingPrivate ? "Cancel Editing" : "Edit My Private Info"}
+              </button>
+            )}
           </div>
 
-          {isEditingPrivate ? (
+          {isSelfView && isEditingPrivate ? (
             <form onSubmit={handleSavePrivateInfo} className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -418,65 +426,72 @@ export default function EmployeeInfo({ employee, isSelfView = false, onBack, onU
       {/* Tab Content: Security */}
       {activeTab === "Security" && (
         <div className="space-y-6 text-xs">
-          {/* Password Change Form */}
-          <div className="bg-white rounded-lg border border-slate-200 p-5">
-            <h3 className="text-xs font-semibold text-slate-900 mb-1">Password & Security Controls</h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Update your account login password. Must contain at least 6 characters.
-            </p>
+          {/* Password Change Form (Only for Self Profile) */}
+          {isSelfView ? (
+            <div className="bg-white rounded-lg border border-slate-200 p-5">
+              <h3 className="text-xs font-semibold text-slate-900 mb-1">Password & Security Controls</h3>
+              <p className="text-xs text-slate-500 mb-4">
+                Update your account login password. Must contain at least 6 characters.
+              </p>
 
-            {securityNotice && (
-              <div
-                className={`p-3 rounded-md mb-4 text-xs font-medium ${
-                  securityNotice.type === "success"
-                    ? "bg-teal-50 text-teal-800 border border-teal-200"
-                    : "bg-rose-50 text-rose-800 border border-rose-200"
-                }`}
-              >
-                {securityNotice.message}
-              </div>
-            )}
+              {securityNotice && (
+                <div
+                  className={`p-3 rounded-md mb-4 text-xs font-medium ${
+                    securityNotice.type === "success"
+                      ? "bg-teal-50 text-teal-800 border border-teal-200"
+                      : "bg-rose-50 text-rose-800 border border-rose-200"
+                  }`}
+                >
+                  {securityNotice.message}
+                </div>
+              )}
 
-            <form onSubmit={handlePasswordChange} className="max-w-md space-y-3">
-              <div>
-                <label className="text-slate-700 block mb-1 font-medium">Current Password *</label>
-                <input
-                  type="password"
-                  required
-                  value={currentPass}
-                  onChange={(e) => setCurrentPass(e.target.value)}
-                  className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs bg-white focus:ring-2 focus:ring-teal-200"
-                />
-              </div>
-              <div>
-                <label className="text-slate-700 block mb-1 font-medium">New Password *</label>
-                <input
-                  type="password"
-                  required
-                  value={newPass}
-                  onChange={(e) => setNewPass(e.target.value)}
-                  className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs bg-white focus:ring-2 focus:ring-teal-200"
-                />
-              </div>
-              <div>
-                <label className="text-slate-700 block mb-1 font-medium">Confirm New Password *</label>
-                <input
-                  type="password"
-                  required
-                  value={confirmPass}
-                  onChange={(e) => setConfirmPass(e.target.value)}
-                  className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs bg-white focus:ring-2 focus:ring-teal-200"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={updatingPassword}
-                className="bg-teal-600 text-white font-medium px-4 py-2 rounded-md hover:bg-teal-700 transition-colors cursor-pointer"
-              >
-                {updatingPassword ? "Updating Password..." : "Update Password"}
-              </button>
-            </form>
-          </div>
+              <form onSubmit={handlePasswordChange} className="max-w-md space-y-3">
+                <div>
+                  <label className="text-slate-700 block mb-1 font-medium">Current Password *</label>
+                  <input
+                    type="password"
+                    required
+                    value={currentPass}
+                    onChange={(e) => setCurrentPass(e.target.value)}
+                    className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs bg-white focus:ring-2 focus:ring-teal-200"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-700 block mb-1 font-medium">New Password *</label>
+                  <input
+                    type="password"
+                    required
+                    value={newPass}
+                    onChange={(e) => setNewPass(e.target.value)}
+                    className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs bg-white focus:ring-2 focus:ring-teal-200"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-700 block mb-1 font-medium">Confirm New Password *</label>
+                  <input
+                    type="password"
+                    required
+                    value={confirmPass}
+                    onChange={(e) => setConfirmPass(e.target.value)}
+                    className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs bg-white focus:ring-2 focus:ring-teal-200"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={updatingPassword}
+                  className="bg-teal-600 text-white font-medium px-4 py-2 rounded-md hover:bg-teal-700 transition-colors cursor-pointer"
+                >
+                  {updatingPassword ? "Updating Password..." : "Update Password"}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 text-slate-600">
+              <i className="ti ti-lock text-slate-400 mr-1" aria-hidden="true"></i>
+              Password modification is restricted to account owners.
+            </div>
+          )}
 
           {/* Audit Log / Login History */}
           <div className="bg-white rounded-lg border border-slate-100 p-5">

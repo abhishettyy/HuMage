@@ -75,8 +75,27 @@ export default function App() {
   const [isSelfProfile, setIsSelfProfile] = useState(false);
   const [toast, setToast] = useState(null);
 
-  const loggedInEmployee = employees.find((e) => e.id === loggedInEmpCode) || employees[0];
-  const isSuperAdmin = Boolean(loggedInEmpCode === "admin" || (role === "admin" && (!loggedInEmpCode || loggedInEmpCode === "admin")));
+  // STRICT SUPER ADMIN CHECK: Only login_id === 'admin' is Root Super Admin
+  const isSuperAdmin = Boolean(loggedInEmpCode && loggedInEmpCode.toLowerCase() === "admin");
+
+  // Resolve currently logged in employee object
+  const loggedInEmployee = employees.find((e) => e.id === loggedInEmpCode) || {
+    id: loggedInEmpCode || "OIUSER2026",
+    name: loggedInEmpCode === "admin" ? "Root Super Admin" : `User (${loggedInEmpCode || "Emp"})`,
+    firstName: loggedInEmpCode === "admin" ? "Root" : "User",
+    lastName: loggedInEmpCode === "admin" ? "Super Admin" : (loggedInEmpCode || ""),
+    department: role === "admin" ? "Human Resources" : "Engineering",
+    jobPosition: isSuperAdmin ? "Root Super Administrator" : role === "admin" ? "HR Admin / Company Admin" : "Software Engineer",
+    manager: "Arjun Verma",
+    email: `${(loggedInEmpCode || "user").toLowerCase()}@dayflow.io`,
+    mobile: "+91 98765 43210",
+    location: "Bengaluru",
+    joiningDate: new Date().toISOString().split("T")[0],
+    status: STATUS.BOARDING,
+    wage: 50000,
+    skills: ["JavaScript", "HTML", "CSS"],
+    about: "Authenticated Dayflow system user."
+  };
 
   const handleSignIn = (selectedRole, empCode) => {
     setRole(selectedRole);
@@ -272,11 +291,10 @@ export default function App() {
   }
 
   if (selectedEmployee || isSelfProfile) {
-    const targetEmp = isSelfProfile
-      ? role === "admin"
-        ? employees[2] || employees[0]
-        : loggedInEmployee
-      : selectedEmployee;
+    let targetEmp = selectedEmployee;
+    if (isSelfProfile) {
+      targetEmp = loggedInEmployee;
+    }
 
     return (
       <div className="min-h-screen bg-white">
@@ -332,6 +350,7 @@ export default function App() {
       {tab === "attendance" && (
         <Attendance
           role={role}
+          isSuperAdmin={isSuperAdmin}
           currentEmployee={loggedInEmployee}
           employees={employees}
           attendanceRecords={attendanceRecords}
