@@ -136,6 +136,7 @@ export default function App() {
 
   // Viewing a specific employee or self profile
   if (selectedEmployee || isSelfProfile) {
+    const currentEmployee = role === "admin" ? employees[2] : employees[0];
     const targetEmp = isSelfProfile
       ? role === "admin"
         ? employees[2] // Priya Shah / HR Admin
@@ -156,6 +157,9 @@ export default function App() {
             setSelectedEmployee(null);
             setIsSelfProfile(true);
           }}
+          onCheckIn={handleCheckIn}
+          onCheckOut={handleCheckOut}
+          employee={currentEmployee}
           onLogOut={() => {
             setRole(null);
             setSelectedEmployee(null);
@@ -184,6 +188,9 @@ export default function App() {
         role={role}
         onOpenSelfProfile={() => setIsSelfProfile(true)}
         onLogOut={() => setRole(null)}
+        onCheckIn={handleCheckIn}
+        onCheckOut={handleCheckOut}
+        employee={role === "admin" ? employees[2] : employees[0]}
       />
 
       {tab === "dashboard" && (

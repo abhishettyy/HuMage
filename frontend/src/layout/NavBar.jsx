@@ -7,7 +7,7 @@ const TABS = [
   { key: "salary", label: "Salary", icon: "ti-report-money", adminOnly: true },
 ];
 
-export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, onLogOut }) {
+export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, onLogOut, onCheckIn, onCheckOut, employee }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
@@ -46,9 +46,10 @@ export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, on
         <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-200"
+            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-700 relative transition-colors focus:outline-none focus:ring-2 focus:ring-teal-200"
           >
             {role === "admin" ? "AD" : "MN"}
+            <span className={`absolute top-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${employee?.status === "boarding" ? "bg-teal-500" : (employee?.status === "in_transit" ? "bg-slate-400" : "bg-amber-500")}`}></span>
           </button>
 
           {dropdownOpen && (
@@ -63,6 +64,29 @@ export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, on
                 <p className="text-[11px] text-slate-500 font-mono">
                   {role === "admin" ? "ADMIN_ROOT" : "OIMENA20240012"}
                 </p>
+              </div>
+
+              {/* Check In / Check Out Floating Widget */}
+              <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <div className="flex justify-between items-center mb-2">
+                   <p className="text-xs font-semibold text-slate-700">Attendance</p>
+                </div>
+                {!employee?.checkIn && (
+                  <button onClick={onCheckIn} className="w-full text-left px-3 py-1.5 text-xs font-medium bg-teal-600 text-white rounded hover:bg-teal-700 mb-1 flex items-center justify-between">
+                    Check In <i className="ti ti-arrow-right"></i>
+                  </button>
+                )}
+                {employee?.checkIn && (
+                  <p className="text-[10px] text-slate-500 mb-2 font-mono">Checked in: {employee.checkIn}</p>
+                )}
+                {employee?.checkIn && !employee?.checkOut && (
+                  <button onClick={onCheckOut} className="w-full text-left px-3 py-1.5 text-xs font-medium border border-slate-200 text-slate-700 rounded hover:bg-white flex items-center justify-between shadow-sm">
+                    Check Out <i className="ti ti-arrow-right"></i>
+                  </button>
+                )}
+                {employee?.checkOut && (
+                  <p className="text-[10px] text-slate-500 font-mono">Checked out: {employee.checkOut}</p>
+                )}
               </div>
 
               <button
