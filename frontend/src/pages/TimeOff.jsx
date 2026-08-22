@@ -1,118 +1,112 @@
 import { useState } from "react";
 import DeparturesBoard from "../components/DeparturesBoard";
-import { initialLeaveBalances } from "../data/mockData";
 
-export default function TimeOff({ role, currentEmployee, employees, requests, onApproveLeave, onRejectLeave, onSubmitLeave }) {
-  const [showNew, setShowNew] = useState(false);
-
-  // Form state
+export default function TimeOff({
+  role,
+  currentEmployee,
+  employees,
+  requests,
+  onApproveLeave,
+  onRejectLeave,
+  onSubmitLeave,
+}) {
+  const [showNewModal, setShowNewModal] = useState(false);
   const [leaveType, setLeaveType] = useState("Paid time off");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
   const [reason, setReason] = useState("");
   const [hasAttachment, setHasAttachment] = useState(false);
 
   const currentUser = currentEmployee || employees[0];
 
+  const calcDays = (sDate, eDate) => {
+    if (!sDate || !eDate) return 1;
+    const start = new Date(sDate);
+    const end = new Date(eDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 1;
+    const diffTime = Math.abs(end - start);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  };
+
+  const calculatedDays = calcDays(startDate, endDate);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!startDate || !endDate) return;
 
-    const startObj = new Date(startDate);
-    const endObj = new Date(endDate);
-    
-    // Dynamic calculation of leave days between start and end date inclusive
-    const diffTime = Math.abs(endObj - startObj);
-    const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
-
-    const startFormatted = startObj.toLocaleDateString("en-GB");
-    const endFormatted = endObj.toLocaleDateString("en-GB");
-
-    // Map UI leave type to backend ENUM
-    let mappedType = "PAID";
-    if (leaveType === "Sick leave") mappedType = "SICK";
-    if (leaveType === "Unpaid leave") mappedType = "UNPAID";
+    const typeCode = leaveType.includes("Sick")
+      ? "SICK"
+      : leaveType.includes("Unpaid")
+      ? "UNPAID"
+      : "PAID";
 
     const newReq = {
-      id: Date.now(),
+      id: Date.now().toString(),
       employeeId: currentUser.id,
       name: currentUser.name,
-      start: startFormatted,
-      end: endFormatted,
+      leaveType: typeCode,
       startDate,
       endDate,
-      leaveType: mappedType,
-      type: leaveType,
-      days: diffDays,
-      reason: reason || `${leaveType} application`,
+      days: calculatedDays,
+      reason: reason || "Time off request",
       status: "Pending",
+      attachmentUrl: hasAttachment ? "https://example.com/cert.pdf" : null,
     };
 
     onSubmitLeave(newReq);
-    setShowNew(false);
-    setStartDate("");
-    setEndDate("");
+    setShowNewModal(false);
     setReason("");
   };
 
-  const balances = initialLeaveBalances[currentUser?.id] || { paid: 24, sick: 7 };
-
-  const userRequests = requests.filter(
-    (r) => r.employeeId === currentUser?.id || r.name === currentUser?.name
-  );
-
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
-      <div className="flex items-center justify-between mb-5">
+    <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Time off</h1>
+          <h1 className="text-xl font-semibold text-slate-900">Time Off</h1>
           <p className="text-xs text-slate-600 mt-0.5">
             {role === "admin"
-              ? "Departures Board — Review & approve employee leave requests."
-              : `Flight status — Track your balances and submit time off (${currentUser?.name || "Employee"}).`}
+              ? "Leave approval pipeline & workforce scheduling."
+              : `Submit time-off requests and track balance (${currentUser.name}).`}
           </p>
         </div>
-        {role !== "admin" && (
-          <button
-            onClick={() => setShowNew(true)}
-            className="text-xs font-medium px-3.5 py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <i className="ti ti-plane-arrival text-sm" aria-hidden="true"></i>
-            + New request
-          </button>
-        )}
+
+        <button
+          onClick={() => setShowNewModal(true)}
+          className="text-xs font-medium px-3.5 py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
+        >
+          <i className="ti ti-plane-departure text-sm" aria-hidden="true"></i>
+          + Request Time Off
+        </button>
       </div>
 
-      {role !== "admin" && (
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="rounded-lg bg-teal-50/50 border border-teal-100 p-4">
-            <p className="text-xs font-medium text-teal-800">Paid Time Off</p>
-            <p className="text-2xl font-bold font-mono text-teal-900 mt-1">
-              {balances.paid} <span className="text-xs font-normal text-teal-700 font-sans">days available</span>
-            </p>
-          </div>
-          <div className="rounded-lg bg-slate-50 border border-slate-200 p-4">
-            <p className="text-xs font-medium text-slate-600">Sick Leave</p>
-            <p className="text-2xl font-bold font-mono text-slate-900 mt-1">
-              {balances.sick} <span className="text-xs font-normal text-slate-500 font-sans">days available</span>
-            </p>
-          </div>
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="rounded-lg bg-teal-50/70 border border-teal-200 px-4 py-3">
+          <p className="text-xs font-semibold text-teal-900">Paid Leave Balance</p>
+          <p className="text-xl font-bold font-mono text-teal-950 mt-1">24 Days</p>
         </div>
-      )}
+        <div className="rounded-lg bg-amber-50/70 border border-amber-200 px-4 py-3">
+          <p className="text-xs font-semibold text-amber-900">Sick Leave Balance</p>
+          <p className="text-xl font-bold font-mono text-amber-950 mt-1">07 Days</p>
+        </div>
+        <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
+          <p className="text-xs font-semibold text-slate-700">Unpaid Leave</p>
+          <p className="text-xl font-bold font-mono text-slate-900 mt-1">00 Days</p>
+        </div>
+      </div>
 
       <DeparturesBoard
-        requests={role === "admin" ? requests : userRequests}
-        showActions={role === "admin"}
+        role={role}
+        requests={requests}
         onApprove={onApproveLeave}
         onReject={onRejectLeave}
       />
 
-      {showNew && (
+      {showNewModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="w-full max-w-sm bg-white rounded-xl shadow-2xl p-6 border border-slate-200 animate-pop-in">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-6 border border-slate-200 animate-pop-in">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
               <h2 className="text-base font-semibold text-slate-900">Request Time Off</h2>
-              <button onClick={() => setShowNew(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <button onClick={() => setShowNewModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <i className="ti ti-x text-lg" aria-hidden="true"></i>
               </button>
             </div>
@@ -123,7 +117,7 @@ export default function TimeOff({ role, currentEmployee, employees, requests, on
                 <select
                   value={leaveType}
                   onChange={(e) => setLeaveType(e.target.value)}
-                  className="w-full border border-slate-200 rounded-md px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-teal-200"
+                  className="w-full border border-slate-200 rounded-md px-3 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-teal-200 cursor-pointer"
                 >
                   <option>Paid time off</option>
                   <option>Sick leave</option>
@@ -152,6 +146,14 @@ export default function TimeOff({ role, currentEmployee, employees, requests, on
                     className="w-full border border-slate-200 rounded-md px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-teal-200"
                   />
                 </div>
+              </div>
+
+              {/* Dynamic Allocation Counter */}
+              <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-md flex justify-between items-center text-xs">
+                <span className="text-slate-600 font-medium">Calculated Leave Duration:</span>
+                <span className="font-mono font-bold text-teal-800 bg-white px-2 py-0.5 rounded border border-slate-200">
+                  {calculatedDays} {calculatedDays === 1 ? "Day" : "Days"}
+                </span>
               </div>
 
               <div>
@@ -187,10 +189,10 @@ export default function TimeOff({ role, currentEmployee, employees, requests, on
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowNew(false)}
+                  onClick={() => setShowNewModal(false)}
                   className="flex-1 text-xs font-medium py-2 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
                 >
-                  Discard
+                  Cancel
                 </button>
               </div>
             </form>

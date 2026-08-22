@@ -71,6 +71,26 @@ export default function Attendance({ role, isSuperAdmin = false, currentEmployee
             </div>
           )}
 
+          {/* Month Summary Bar */}
+          <div className="flex flex-wrap items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs font-medium">
+            <div className="flex items-center gap-1.5 border-r border-slate-200 pr-3">
+              <span className="text-slate-500 font-mono">Period:</span>
+              <span className="font-semibold text-slate-800 font-mono">{currentMonth}</span>
+            </div>
+            <div className="bg-white border border-slate-200 px-3 py-1 rounded flex items-center gap-2">
+              <span className="text-slate-500">Days present:</span>
+              <span className="text-teal-700 font-mono font-bold">{daysPresent}</span>
+            </div>
+            <div className="bg-white border border-slate-200 px-3 py-1 rounded flex items-center gap-2">
+              <span className="text-slate-500">Leaves count:</span>
+              <span className="text-slate-800 font-mono font-bold">{currentUser?.leavesCount || 0}</span>
+            </div>
+            <div className="bg-white border border-slate-200 px-3 py-1 rounded flex items-center gap-2">
+              <span className="text-slate-500">Total working days:</span>
+              <span className="text-slate-900 font-mono font-bold">22</span>
+            </div>
+          </div>
+
           <div className="flex justify-between items-center">
             <div className="relative w-full sm:w-72">
               <i className="ti ti-search absolute left-3 top-2.5 text-slate-400 text-sm" aria-hidden="true"></i>
