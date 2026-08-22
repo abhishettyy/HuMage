@@ -19,7 +19,7 @@ DROP TYPE IF EXISTS leave_status CASCADE;
 DROP TYPE IF EXISTS attendance_status CASCADE;
 
 -- 3. Create Custom ENUM Types
-CREATE TYPE user_role AS ENUM ('ADMIN', 'EMPLOYEE');
+CREATE TYPE user_role AS ENUM ('ADMIN', 'HR_OFFICER', 'EMPLOYEE');
 CREATE TYPE leave_type AS ENUM ('PAID', 'SICK', 'UNPAID');
 CREATE TYPE leave_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 CREATE TYPE attendance_status AS ENUM ('PRESENT', 'ABSENT', 'ON_LEAVE');

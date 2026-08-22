@@ -92,26 +92,26 @@ ping to the group.
 ## P3 — Leave / Time-Off
 
 **Hour 0:30–2:00**
-- [ ] Leave types: Paid / Sick / Unpaid, seed default balances (24 / 7 / — days)
-- [ ] Employee "NEW" leave request modal: type, start/end date, allocation days,
+- [x] Leave types: Paid / Sick / Unpaid, seed default balances (24 / 7 / — days)
+- [x] Employee "NEW" leave request modal: type, start/end date, allocation days,
       attachment (required only for Sick Leave)
-- [ ] Employee Time Off view: balances by type + own request history
+- [x] Employee Time Off view: balances by type + own request history
 
 **Hour 2:00–3:30**
-- [ ] Admin/HR Time Off list view: search bar, Name/Start/End/Type/Status columns,
+- [x] Admin/HR Time Off list view: search bar, Name/Start/End/Type/Status columns,
       **Approve** and **Reject** buttons
-- [ ] Approve/Reject updates status immediately, decrements/restores balance
+- [x] Approve/Reject updates status immediately, decrements/restores balance
       accordingly
-- [ ] Publish a clean internal function/endpoint: `getUnpaidLeaveDays(employeeId, month)`
+- [x] Publish a clean internal function/endpoint: `getUnpaidLeaveDays(employeeId, month)`
       → number — **this is the contract P4 needs**, agree shape with P4 by hour 2:30
 
 **Hour 3:30–5:00**
-- [ ] Wire leave status into P1's dashboard cards (✈️ when on approved leave today)
-- [ ] Validation: date ranges can't overlap existing approved leave, can't exceed balance
+- [x] Wire leave status into P1's dashboard cards (✈️ when on approved leave today)
+- [x] Validation: date ranges can't overlap existing approved leave, can't exceed balance
 
 **Hour 5:00–7:00** — Integration support + stretch
-- [ ] Help P4 test approve → payable-days recompute flow
-- [ ] Stretch: unique feature #5 (live "payable days updated" banner/toast on approval)
+- [x] Help P4 test approve → payable-days recompute flow
+- [x] Stretch: unique feature #5 (live "payable days updated" banner/toast on approval)
 
 **Hour 7:00–8:00** — Freeze + demo script rehearsal
 
