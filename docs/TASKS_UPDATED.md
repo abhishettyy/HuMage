@@ -64,26 +64,26 @@ ping to the group.
 ## P2 — Attendance
 
 **Hour 0:30–2:00**
-- [ ] Check In / Check Out endpoint + button (simulate systray as an in-app widget)
-- [ ] On check-in: flip status to present, record timestamp; on check-out: compute
+- [x] Check In / Check Out endpoint + button (simulate systray as an in-app widget)
+- [x] On check-in: flip status to present, record timestamp; on check-out: compute
       work_hours, extra_hours
-- [ ] Employee attendance view: day-wise, current month default, prev/next month nav
+- [x] Employee attendance view: day-wise, current month default, prev/next month nav
 
 **Hour 2:00–3:30**
-- [ ] Admin/HR attendance list view: search bar, date filter (prev/next arrows), columns
+- [x] Admin/HR attendance list view: search bar, date filter (prev/next arrows), columns
       = Check In, Check Out, Work Hours, Extra Hours **plus** Count of days present,
       Leaves count, Total working days (these last three are admin-view-only extras)
-- [ ] Publish a clean internal function/endpoint: `getPayableDaysInput(employeeId, month)`
+- [x] Publish a clean internal function/endpoint: `getPayableDaysInput(employeeId, month)`
       → { totalWorkingDays, presentDays } — **this is the contract P4 needs**, agree on
       its shape with P4 by hour 2:30 at the latest
 
 **Hour 3:30–5:00**
-- [ ] Wire attendance status into P1's dashboard cards (🟢/🟡)
-- [ ] Edge cases: missing check-out, multiple check-ins same day, timezone handling
+- [x] Wire attendance status into P1's dashboard cards (🟢/🟡)
+- [x] Edge cases: missing check-out, multiple check-ins same day, timezone handling
 
 **Hour 5:00–7:00** — Integration support + stretch
-- [ ] Help P4 test the attendance→payroll pipeline end-to-end
-- [ ] Stretch: unique feature #4 ("at risk" badge — ≥3 unexplained absences this month)
+- [x] Help P4 test the attendance→payroll pipeline end-to-end
+- [x] Stretch: unique feature #4 ("at risk" badge — ≥3 unexplained absences this month)
 
 **Hour 7:00–8:00** — Freeze + demo script rehearsal
 
@@ -120,7 +120,7 @@ ping to the group.
 ## P4 — Salary / Payroll Engine (the core "wow" logic)
 
 **Hour 0:30–2:00**
-- [ ] Build the pure calc engine first, with **mock wage input**, no UI yet:
+- [x] Build the pure calc engine first, with **mock wage input**, no UI yet:
   - Basic = 50% × Wage
   - HRA = 50% × Basic
   - Standard Allowance = fixed ₹4,167
@@ -130,30 +130,30 @@ ping to the group.
   - PF (Employee) = 12% × Basic, PF (Employer) = 12% × Basic
   - Professional Tax = flat ₹200/month
   - Assert: sum(components) never exceeds Wage
-- [ ] Unit-test the engine against the worked example in `PS.md §6` (Wage ₹50,000 →
+- [x] Unit-test the engine against the worked example in `PS.md §6` (Wage ₹50,000 →
       Basic ₹25,000, HRA ₹12,500, etc.) before touching UI
 
 **Hour 2:00–3:30**
-- [ ] Admin Salary Info tab UI: Wage input → live recompute of every component
+- [x] Admin Salary Info tab UI: Wage input → live recompute of every component
       (unique feature #1, "live salary simulator" — cheap since engine already exists)
-- [ ] Server-side RBAC: Salary tab/endpoints return 403 for non-Admin, not just hidden
+- [x] Server-side RBAC: Salary tab/endpoints return 403 for non-Admin, not just hidden
       in UI (coordinate with P1)
-- [ ] Employee-facing read-only "My Payslip" summary (simpler view, per PS.md §6 note
+- [x] Employee-facing read-only "My Payslip" summary (simpler view, per PS.md §6 note
       on reconciling PDF vs wireframe visibility rule)
 
 **Hour 3:30–5:00**
-- [ ] Payable-days pipeline: `payableDays = totalWorkingDays − unpaidLeaveDays
+- [x] Payable-days pipeline: `payableDays = totalWorkingDays − unpaidLeaveDays
       (from P3) − missingAttendanceDays (from P2)`
-- [ ] Net pay adjustment: scale gross proportionally by `payableDays / totalWorkingDays`
+- [x] Net pay adjustment: scale gross proportionally by `payableDays / totalWorkingDays`
       (or your team's simpler agreed formula — document whichever you pick in PS.md's
       companion notes)
-- [ ] Wire real data from P2 (`getPayableDaysInput`) and P3 (`getUnpaidLeaveDays`)
+- [x] Wire real data from P2 (`getPayableDaysInput`) and P3 (`getUnpaidLeaveDays`)
       instead of mocks
 
 **Hour 5:00–7:00** — Integration + stretch
-- [ ] End-to-end test: check-in/out data + leave approval → correct payable days →
+- [x] End-to-end test: check-in/out data + leave approval → correct payable days →
       correct adjusted salary shown on Admin + Employee views
-- [ ] Stretch: unique feature #2 — "Generate Payslip" PDF button (wage, components,
+- [x] Stretch: unique feature #2 — "Generate Payslip" PDF button (wage, components,
       deductions, payable-days-adjusted net pay)
 
 **Hour 7:00–8:00** — Freeze + demo script rehearsal
