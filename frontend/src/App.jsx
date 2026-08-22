@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NavBar from "./layout/NavBar";
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
@@ -14,8 +14,10 @@ import {
   STATUS,
 } from "./data/mockData";
 import {
+  fetchEmployeesApi,
   checkInEmployee,
   checkOutEmployee,
+  createEmployeeApi,
   submitLeaveRequest,
   approveLeaveRequest,
   rejectLeaveRequest,
@@ -24,21 +26,112 @@ import {
 export default function App() {
   const [role, setRole] = useState(null); // null | "admin" | "employee"
   const [tab, setTab] = useState("dashboard");
-  const [employees, setEmployees] = useState(initialEmployees);
-  const [leaveRequests, setLeaveRequests] = useState(initialLeaveRequests);
-  const [attendanceRecords, setAttendanceRecords] = useState(initialAttendanceRecords);
+
+  // LocalStorage persistent state managers
+  const [employees, setEmployees] = useState(() => {
+    try {
+      const saved = localStorage.getItem("dayflow_employees");
+      return saved ? JSON.parse(saved) : initialEmployees;
+    } catch {
+      return initialEmployees;
+    }
+  });
+
+  const [leaveRequests, setLeaveRequests] = useState(() => {
+    try {
+      const saved = localStorage.getItem("dayflow_leave_requests");
+      return saved ? JSON.parse(saved) : initialLeaveRequests;
+    } catch {
+      return initialLeaveRequests;
+    }
+  });
+
+  const [attendanceRecords, setAttendanceRecords] = useState(() => {
+    try {
+      const saved = localStorage.getItem("dayflow_attendance");
+      return saved ? JSON.parse(saved) : initialAttendanceRecords;
+    } catch {
+      return initialAttendanceRecords;
+    }
+  });
+
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isSelfProfile, setIsSelfProfile] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // Fetch employees directly from Supabase DB via Node.js API when authenticated
+  useEffect(() => {
+    if (role) {
+      fetchEmployeesApi().then((dbEmployees) => {
+        if (dbEmployees && dbEmployees.length > 0) {
+          // Merge dbEmployees into current state
+          setEmployees((prev) => {
+            const dbMapped = dbEmployees.map((d) => ({
+              id: d.empCode || d.id,
+              name: d.name,
+              firstName: d.name.split(" ")[0],
+              lastName: d.name.split(" ")[1] || "",
+              department: d.department,
+              jobPosition: d.jobPosition,
+              manager: "Arjun Verma",
+              email: d.empCode ? `${d.empCode.toLowerCase()}@dayflow.io` : "employee@dayflow.io",
+              mobile: "+91 98765 43210",
+              location: d.location || "Bengaluru",
+              joiningDate: new Date().toISOString().split("T")[0],
+              status: d.status === "PRESENT" ? STATUS.BOARDING : d.status === "ON_LEAVE" ? STATUS.IN_TRANSIT : STATUS.DELAYED,
+              checkIn: d.checkIn,
+              checkOut: d.checkOut,
+              wage: 50000,
+            }));
+
+            // Combine non-duplicate employees
+            const existingIds = new Set(dbMapped.map((e) => e.id));
+            const localOnly = prev.filter((e) => !existingIds.has(e.id));
+            return [...dbMapped, ...localOnly];
+          });
+        }
+      });
+    }
+  }, [role]);
+
+  // Sync state to LocalStorage
+  useEffect(() => {
+    localStorage.setItem("dayflow_employees", JSON.stringify(employees));
+  }, [employees]);
+
+  useEffect(() => {
+    localStorage.setItem("dayflow_leave_requests", JSON.stringify(leaveRequests));
+  }, [leaveRequests]);
+
+  useEffect(() => {
+    localStorage.setItem("dayflow_attendance", JSON.stringify(attendanceRecords));
+  }, [attendanceRecords]);
 
   const showToast = (title, message) => {
     setToast({ title, message });
     setTimeout(() => setToast(null), 4500);
   };
 
-  const handleAddEmployee = (newEmp) => {
+  const handleAddEmployee = async (newEmp) => {
     setEmployees((prev) => [newEmp, ...prev]);
     showToast("Employee Created", `Generated Login ID ${newEmp.id} for ${newEmp.name}`);
+
+    // Persist directly to Supabase PostgreSQL database
+    try {
+      await createEmployeeApi({
+        firstName: newEmp.firstName,
+        lastName: newEmp.lastName,
+        email: newEmp.email,
+        department: newEmp.department,
+        jobPosition: newEmp.jobPosition,
+        joiningYear: new Date().getFullYear(),
+        phone: newEmp.mobile,
+        location: newEmp.location,
+        wage: newEmp.wage,
+      });
+    } catch (err) {
+      console.warn("Supabase DB sync fallback for new employee:", err.message);
+    }
   };
 
   const handleUpdateEmployee = (updatedEmp) => {
@@ -138,7 +231,7 @@ export default function App() {
   if (selectedEmployee || isSelfProfile) {
     const targetEmp = isSelfProfile
       ? role === "admin"
-        ? employees[2] // Priya Shah / HR Admin
+        ? employees[2] || employees[0] // Priya Shah / HR Admin
         : employees[0] // Meera Nair
       : selectedEmployee;
 

@@ -1,5 +1,5 @@
 /**
- * API Service Client connecting Frontend to Node.js Backend Server
+ * API Service Client connecting Frontend to Node.js Backend Server & Supabase Database
  * Supports Auth, Employee Core, P2 (Attendance), P3 (Leave) & P4 (Salary/Payroll) endpoints
  */
 
@@ -72,6 +72,23 @@ export async function resetPasswordApi(loginId, otp, newPassword) {
   } catch (err) {
     console.warn("API Reset Password fallback mode:", err.message);
     throw err;
+  }
+}
+
+export async function fetchEmployeesApi() {
+  try {
+    const token = localStorage.getItem("dayflow_token");
+    const res = await fetch(`${API_BASE_URL}/employees`, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to fetch employees");
+    return data.employees;
+  } catch (err) {
+    console.warn("API fetch employees fallback mode:", err.message);
+    return null;
   }
 }
 

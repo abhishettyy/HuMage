@@ -10,7 +10,7 @@ export default function NewEmployeeModal({ currentEmployeeCount, onSubmit, onClo
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("+91 ");
   const [location, setLocation] = useState("Bengaluru");
-  const [wage, setWage] = useState(60000);
+  const [wage, setWage] = useState(50000);
   const [joiningDate, setJoiningDate] = useState(new Date().toISOString().split("T")[0]);
   const [createdCredentials, setCreatedCredentials] = useState(null);
 
@@ -34,10 +34,12 @@ export default function NewEmployeeModal({ currentEmployeeCount, onSubmit, onClo
       mobile,
       location,
       joiningDate,
-      status: STATUS.GROUNDED,
+      status: STATUS.DELAYED, // Starts with Yellow Dot (Absent / Delayed)
       checkIn: null,
       checkOut: null,
       wage: Number(wage) || 50000,
+      presentDays: 0,
+      leavesCount: 0,
       skills: ["JavaScript", "HTML", "CSS"],
       certifications: [],
       about: "Newly onboarded team member.",
@@ -78,7 +80,7 @@ export default function NewEmployeeModal({ currentEmployeeCount, onSubmit, onClo
               Admin & HR onboarding flow. Login ID & Password will be auto-generated.
             </p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 cursor-pointer">
             <i className="ti ti-x text-lg" aria-hidden="true"></i>
           </button>
         </div>
@@ -110,7 +112,7 @@ export default function NewEmployeeModal({ currentEmployeeCount, onSubmit, onClo
 
             <button
               onClick={onClose}
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm py-2 rounded-md transition-colors"
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm py-2 rounded-md transition-colors cursor-pointer"
             >
               Done
             </button>
@@ -220,14 +222,14 @@ export default function NewEmployeeModal({ currentEmployeeCount, onSubmit, onClo
             <div className="flex gap-2 mt-5 pt-3 border-t border-slate-100">
               <button
                 type="submit"
-                className="flex-1 text-sm font-medium py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition-colors"
+                className="flex-1 text-sm font-medium py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 transition-colors cursor-pointer"
               >
                 Create Employee
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 text-sm font-medium py-2 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+                className="flex-1 text-sm font-medium py-2 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Cancel
               </button>

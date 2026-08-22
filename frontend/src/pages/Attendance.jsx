@@ -29,14 +29,14 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1 text-xs">
           <button
             onClick={() => setCurrentMonth("September 2025")}
-            className="text-slate-500 hover:text-slate-900 p-0.5"
+            className="text-slate-500 hover:text-slate-900 p-0.5 cursor-pointer"
           >
             <i className="ti ti-chevron-left" aria-hidden="true"></i>
           </button>
           <span className="font-medium text-slate-800 font-mono px-1">{currentMonth}</span>
           <button
             onClick={() => setCurrentMonth("November 2025")}
-            className="text-slate-500 hover:text-slate-900 p-0.5"
+            className="text-slate-500 hover:text-slate-900 p-0.5 cursor-pointer"
           >
             <i className="ti ti-chevron-right" aria-hidden="true"></i>
           </button>
@@ -72,21 +72,34 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredEmployees.map((e, i) => {
-                  const rec = attendanceRecords[i % attendanceRecords.length] || {};
+                {filteredEmployees.map((e) => {
+                  const empRecord = attendanceRecords.find((r) => r.employeeId === e.id) || null;
+                  const isCheckedIn = Boolean(e.checkIn || empRecord?.checkIn);
+                  const isCheckedOut = Boolean(e.checkOut || empRecord?.checkOut);
+
+                  const checkInTime = e.checkIn || empRecord?.checkIn || "—";
+                  const checkOutTime = e.checkOut || empRecord?.checkOut || "—";
+                  const workHours = empRecord?.workHours || (isCheckedIn ? "In Progress" : "00:00");
+                  const extraHours = empRecord?.extraHours || "00:00";
+
+                  // Dynamic present days & leaves count calculation
+                  const presentDays = e.presentDays !== undefined ? e.presentDays : isCheckedIn ? 1 : e.id.includes("OIMENA") ? 20 : 0;
+                  const leavesCount = e.leavesCount !== undefined ? e.leavesCount : e.id.includes("OIMENA") ? 2 : 0;
+                  const totalDays = 22;
+
                   return (
                     <tr key={e.id} className="hover:bg-slate-50/50">
                       <td className="px-4 py-3 font-medium text-slate-900">
                         {e.name}
                         <span className="block font-mono text-[10px] text-slate-400 font-normal">{e.id}</span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-slate-600">{e.checkIn || rec.checkIn || "—"}</td>
-                      <td className="px-4 py-3 font-mono text-slate-600">{e.checkOut || rec.checkOut || "—"}</td>
-                      <td className="px-4 py-3 font-mono text-slate-600">{rec.workHours || "08:30"}</td>
-                      <td className="px-4 py-3 font-mono text-slate-600">{rec.extraHours || "00:00"}</td>
-                      <td className="px-4 py-3 text-slate-700 font-mono">20</td>
-                      <td className="px-4 py-3 text-slate-700 font-mono">2</td>
-                      <td className="px-4 py-3 text-slate-700 font-mono font-medium">22</td>
+                      <td className="px-4 py-3 font-mono text-slate-600">{checkInTime}</td>
+                      <td className="px-4 py-3 font-mono text-slate-600">{checkOutTime}</td>
+                      <td className="px-4 py-3 font-mono text-slate-600">{workHours}</td>
+                      <td className="px-4 py-3 font-mono text-slate-600">{extraHours}</td>
+                      <td className="px-4 py-3 text-slate-700 font-mono font-medium">{presentDays}</td>
+                      <td className="px-4 py-3 text-slate-700 font-mono">{leavesCount}</td>
+                      <td className="px-4 py-3 text-slate-700 font-mono font-medium">{totalDays}</td>
                     </tr>
                   );
                 })}
@@ -110,7 +123,9 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
             </div>
             <div className="rounded-lg bg-teal-50/60 border border-teal-100 px-4 py-3">
               <p className="text-xs text-teal-800 font-medium">Days Present</p>
-              <p className="text-xl font-bold font-mono text-teal-900 mt-1">20</p>
+              <p className="text-xl font-bold font-mono text-teal-900 mt-1">
+                {attendanceRecords.filter((r) => r.employeeId === meera.id || r.checkIn).length || 20}
+              </p>
             </div>
             <div className="rounded-lg bg-slate-50 border border-slate-100 px-4 py-3">
               <p className="text-xs text-slate-500">Approved Leaves</p>
@@ -130,8 +145,8 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {attendanceRecords.map((r) => (
-                  <tr key={r.date} className="hover:bg-slate-50/50">
+                {attendanceRecords.map((r, idx) => (
+                  <tr key={r.id || idx} className="hover:bg-slate-50/50">
                     <td className="px-4 py-2.5 font-mono text-slate-800">{r.date}</td>
                     <td className="px-4 py-2.5 font-mono text-slate-600">{r.checkIn || "—"}</td>
                     <td className="px-4 py-2.5 font-mono text-slate-600">{r.checkOut || "—"}</td>
