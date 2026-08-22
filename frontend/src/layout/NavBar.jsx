@@ -37,13 +37,41 @@ export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, on
               }`}
             >
               <i className={`ti ${t.icon} text-base`} aria-hidden="true"></i>
-              {t.label}
+              {t.key === "dashboard" && role === "employee" ? "Dashboard" : t.label}
             </button>
           ))}
         </nav>
 
-        {/* User Avatar with Dropdown Menu */}
-        <div className="relative">
+        {/* Right side items */}
+        <div className="flex items-center gap-6">
+          {/* Check In / Out Systray */}
+          <div className="flex items-center gap-3 mr-2">
+            {employee?.checkIn && !employee?.checkOut ? (
+              <img src="/assets/status-dot-green.svg" alt="Present" className="w-5 h-5 drop-shadow-sm" />
+            ) : (
+              <img src="/assets/status-dot-red.svg" alt="Absent" className="w-5 h-5 drop-shadow-sm" />
+            )}
+            
+            {!employee?.checkIn && (
+              <button onClick={onCheckIn} className="px-4 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded shadow-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
+                Check IN <img src="/assets/arrow-right.svg" alt="in" className="w-3 h-3 opacity-60" />
+              </button>
+            )}
+            {employee?.checkIn && !employee?.checkOut && (
+              <div className="flex flex-col items-end">
+                <div className="text-[9px] text-slate-500 font-mono tracking-tight mb-0.5">Since {employee.checkIn}</div>
+                <button onClick={onCheckOut} className="px-4 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded shadow-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
+                  Check Out <img src="/assets/arrow-right.svg" alt="out" className="w-3 h-3 opacity-60" />
+                </button>
+              </div>
+            )}
+            {employee?.checkOut && (
+              <div className="text-[10px] text-slate-400 font-mono tracking-tight bg-slate-100 px-2 py-1 rounded border border-slate-200">Checked out: {employee.checkOut}</div>
+            )}
+          </div>
+
+          {/* User Avatar with Dropdown Menu */}
+          <div className="relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-700 relative transition-colors focus:outline-none focus:ring-2 focus:ring-teal-200"
@@ -64,29 +92,6 @@ export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, on
                 <p className="text-[11px] text-slate-500 font-mono">
                   {role === "admin" ? "ADMIN_ROOT" : "OIMENA20240012"}
                 </p>
-              </div>
-
-              {/* Check In / Check Out Floating Widget */}
-              <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
-                <div className="flex justify-between items-center mb-2">
-                   <p className="text-xs font-semibold text-slate-700">Attendance</p>
-                </div>
-                {!employee?.checkIn && (
-                  <button onClick={onCheckIn} className="w-full text-left px-3 py-1.5 text-xs font-medium bg-teal-600 text-white rounded hover:bg-teal-700 mb-1 flex items-center justify-between">
-                    Check In <i className="ti ti-arrow-right"></i>
-                  </button>
-                )}
-                {employee?.checkIn && (
-                  <p className="text-[10px] text-slate-500 mb-2 font-mono">Checked in: {employee.checkIn}</p>
-                )}
-                {employee?.checkIn && !employee?.checkOut && (
-                  <button onClick={onCheckOut} className="w-full text-left px-3 py-1.5 text-xs font-medium border border-slate-200 text-slate-700 rounded hover:bg-white flex items-center justify-between shadow-sm">
-                    Check Out <i className="ti ti-arrow-right"></i>
-                  </button>
-                )}
-                {employee?.checkOut && (
-                  <p className="text-[10px] text-slate-500 font-mono">Checked out: {employee.checkOut}</p>
-                )}
               </div>
 
               <button
@@ -110,6 +115,7 @@ export default function NavBar({ active, onNavigate, role, onOpenSelfProfile, on
               </button>
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

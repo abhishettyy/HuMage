@@ -1,10 +1,21 @@
 import { useState } from "react";
 import StatusBadge from "../components/StatusBadge";
+import { computeSalary } from "../data/mockData";
 
-const TABS = ["Resume", "Private info", "Security"];
+export default function EmployeeInfo({ employee, isSelfView = false, role, onBack, onUpdateEmployee }) {
+  if (!employee) return null;
+  const tabs = ["Resume", "Private Info", "Salary Info"];
+  if (role === "employee" || !isSelfView) {
+    tabs.push("Security");
+  }
 
-export default function EmployeeInfo({ employee, isSelfView = false, onBack, onUpdateEmployee }) {
   const [activeTab, setActiveTab] = useState("Resume");
+
+  // State for editable Salary Info
+  const [wage, setWage] = useState(employee?.wage || 50000);
+  const [workingDays, setWorkingDays] = useState("5");
+  const [breakTime, setBreakTime] = useState("1");
+  const salaryData = computeSalary(Number(wage) || 0);
 
   // State for editable skills/about
   const [newSkill, setNewSkill] = useState("");
@@ -61,39 +72,66 @@ export default function EmployeeInfo({ employee, isSelfView = false, onBack, onU
       )}
 
       {/* Header */}
-      <div className="flex items-start gap-4 mb-6 bg-slate-50 p-5 rounded-xl border border-slate-100">
-        <div className="w-16 h-16 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-lg font-bold text-slate-800">
+      <div className="flex flex-col sm:flex-row items-start gap-8 mb-8 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="relative w-28 h-28 shrink-0 rounded-full bg-slate-50 border border-slate-200 shadow-sm flex items-center justify-center text-4xl font-bold text-slate-800">
           {employee.name
             .split(" ")
             .map((n) => n[0])
             .join("")}
+          {isSelfView && (
+            <button className="absolute bottom-0 right-0 bg-white p-2 rounded-full border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer">
+              <img src="/assets/pencil.svg" alt="Edit" className="w-4 h-4 opacity-70" />
+            </button>
+          )}
         </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-slate-900">{employee.name}</h1>
+        
+        <div className="flex-1 w-full">
+          <div className="flex flex-wrap items-center gap-4 mb-6">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{employee.name}</h1>
             <StatusBadge status={employee.status} />
             {isSelfView && (
-              <span className="text-[10px] bg-teal-100 text-teal-800 font-semibold px-2 py-0.5 rounded">
-                MY PROFILE
+              <span className="text-[10px] bg-teal-50 text-teal-700 font-bold px-2 py-1 rounded-md border border-teal-100 uppercase tracking-wider">
+                My Profile
               </span>
             )}
           </div>
-          <p className="text-xs font-medium text-slate-600 mt-0.5">
-            {employee.jobPosition} · {employee.department}
-          </p>
-          <div className="flex items-center gap-4 text-xs text-slate-500 mt-2 font-mono">
-            <span>ID: {employee.id}</span>
-            <span>·</span>
-            <span>Joined: {employee.joiningDate}</span>
-            <span>·</span>
-            <span>Location: {employee.location}</span>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 text-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+              <span className="text-slate-500 font-medium">Login ID</span>
+              <span className="font-mono text-slate-800 font-medium">{employee.id}</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+              <span className="text-slate-500 font-medium">Company</span>
+              <span className="text-slate-800 font-medium">Dayflow Inc.</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+              <span className="text-slate-500 font-medium">Email</span>
+              <span className="text-slate-800">{employee.email}</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+              <span className="text-slate-500 font-medium">Department</span>
+              <span className="text-slate-800">{employee.department}</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+              <span className="text-slate-500 font-medium">Mobile</span>
+              <span className="text-slate-800">{employee.mobile}</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+              <span className="text-slate-500 font-medium">Manager</span>
+              <span className="text-slate-800">{employee.manager}</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+              <span className="text-slate-500 font-medium">Location</span>
+              <span className="text-slate-800">{employee.location}</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
       <div className="flex gap-2 border-b border-slate-200 mb-6">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button
             key={t}
             onClick={() => setActiveTab(t)}
@@ -172,7 +210,7 @@ export default function EmployeeInfo({ employee, isSelfView = false, onBack, onU
       )}
 
       {/* Tab Content: Private Info */}
-      {activeTab === "Private info" && (
+      {activeTab === "Private Info" && (
         <div className="space-y-6 text-xs">
           <div className="bg-white rounded-lg border border-slate-100 p-4 space-y-2">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
@@ -206,6 +244,133 @@ export default function EmployeeInfo({ employee, isSelfView = false, onBack, onU
               <Field label="Bank Name" value={bank.bankName || "—"} />
               <Field label="Account Number" value={bank.accountNumber || "—"} isMono />
               <Field label="IFSC Code" value={bank.ifscCode || "—"} isMono />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab Content: Salary Info (Admin Only) */}
+      {activeTab === "Salary Info" && role === "admin" && (
+        <div className="space-y-6">
+          {/* Top Inputs */}
+          <div className="grid grid-cols-2 gap-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <span className="w-24 text-sm font-medium text-slate-700">Month Wage</span>
+                <input
+                  type="number"
+                  value={wage}
+                  onChange={(e) => setWage(e.target.value)}
+                  className="flex-1 border-b border-slate-300 focus:border-teal-500 outline-none py-1 text-right font-medium text-slate-800"
+                />
+                <span className="text-sm text-slate-500">/ Month</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="w-24 text-sm font-medium text-slate-700">Yearly wage</span>
+                <input
+                  type="number"
+                  value={Number(wage) * 12}
+                  readOnly
+                  className="flex-1 border-b border-slate-300 py-1 text-right font-medium text-slate-800 bg-transparent"
+                />
+                <span className="text-sm text-slate-500">/ Yearly</span>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <span className="w-48 text-sm font-medium text-slate-700">No of working days in a week:</span>
+                <input
+                  type="number"
+                  value={workingDays}
+                  onChange={(e) => setWorkingDays(e.target.value)}
+                  className="w-16 border-b border-slate-300 focus:border-teal-500 outline-none py-1 text-center font-medium text-slate-800"
+                />
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="w-48 text-sm font-medium text-slate-700">Break Time:</span>
+                <input
+                  type="number"
+                  value={breakTime}
+                  onChange={(e) => setBreakTime(e.target.value)}
+                  className="w-16 border-b border-slate-300 focus:border-teal-500 outline-none py-1 text-center font-medium text-slate-800"
+                />
+                <span className="text-sm text-slate-500">/ hrs</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-12">
+            {/* Left Col: Salary Components */}
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 border-b border-slate-200 pb-2 mb-4">Salary Components</h3>
+              <div className="space-y-4">
+                <SalaryComponentRow 
+                  label="Basic Salary" 
+                  description="Define Basic salary from company cost compute it based on monthly Wages"
+                  value={salaryData.components[0].value}
+                  percentage="50.00"
+                />
+                <SalaryComponentRow 
+                  label="House Rent Allowance" 
+                  description="HRA provided to employees 50% of the basic salary"
+                  value={salaryData.components[1].value}
+                  percentage="50.00"
+                />
+                <SalaryComponentRow 
+                  label="Standard Allowance" 
+                  description="A standard allowance is a predetermined, fixed amount provided to employee as part of their salary"
+                  value={salaryData.components[2].value}
+                  percentage="16.67"
+                />
+                <SalaryComponentRow 
+                  label="Performance Bonus" 
+                  description="Variable amount paid during payroll. The value defined by the company and calculated as a % of the basic salary"
+                  value={salaryData.components[3].value}
+                  percentage="8.33"
+                />
+                <SalaryComponentRow 
+                  label="Leave Travel Allowance" 
+                  description="LTA is paid by the company to employees to cover their travel expenses, and calculated as a % of the basic salary"
+                  value={salaryData.components[4].value}
+                  percentage="8.33"
+                />
+                <SalaryComponentRow 
+                  label="Fixed Allowance" 
+                  description="fixed allowance portion of wages is determined after calculating all salary components"
+                  value={salaryData.components[5].value}
+                  percentage="11.67"
+                />
+              </div>
+            </div>
+
+            {/* Right Col: Deductions */}
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 border-b border-slate-200 pb-2 mb-4">Provident Fund (PF) Contribution</h3>
+              <div className="space-y-4 mb-8">
+                <SalaryComponentRow 
+                  label="Employee" 
+                  description="PF is calculated based on the basic salary"
+                  value={salaryData.deductions[0].value}
+                  percentage="12.00"
+                />
+                <SalaryComponentRow 
+                  label="Employer" 
+                  description="PF is calculated based on the basic salary"
+                  value={salaryData.deductions[1].value}
+                  percentage="12.00"
+                />
+              </div>
+
+              <h3 className="text-sm font-bold text-slate-900 border-b border-slate-200 pb-2 mb-4">Tax Deductions</h3>
+              <div className="space-y-4">
+                <SalaryComponentRow 
+                  label="Professional Tax" 
+                  description="Professional Tax deducted from the Gross salary"
+                  value={salaryData.deductions[2].value}
+                  percentage={null}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -311,6 +476,30 @@ function Field({ label, value, isMono = false }) {
     <div className="flex flex-col border-b border-slate-50 pb-2">
       <span className="text-[11px] font-medium text-slate-400">{label}</span>
       <span className={`text-xs text-slate-900 mt-0.5 ${isMono ? "font-mono" : ""}`}>{value}</span>
+    </div>
+  );
+}
+
+function SalaryComponentRow({ label, description, value, percentage }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-slate-800">{Number(value).toFixed(2)}</span>
+            <span className="text-xs text-slate-500">₹ / month</span>
+          </div>
+          {percentage && (
+            <div className="flex items-center gap-1 w-16 justify-end">
+              <span className="text-sm font-medium text-slate-800">{percentage}</span>
+              <span className="text-xs text-slate-500">%</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <p className="text-[10px] text-slate-500 max-w-[80%]">{description}</p>
+      <div className="border-b border-slate-200 mt-2"></div>
     </div>
   );
 }

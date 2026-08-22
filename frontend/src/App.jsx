@@ -6,6 +6,7 @@ import Attendance from "./pages/Attendance";
 import TimeOff from "./pages/TimeOff";
 import Salary from "./pages/Salary";
 import EmployeeInfo from "./pages/EmployeeInfo";
+import EmployeeDashboard from "./pages/EmployeeDashboard";
 import ToastBanner from "./components/ToastBanner";
 import {
   initialEmployees,
@@ -47,12 +48,15 @@ export default function App() {
   };
 
   const handleCheckIn = async () => {
-    const apiRes = await checkInEmployee("OIMENA20240012");
+    const currentUser = role === "admin" ? employees[2] : employees[0];
+    const currentId = currentUser?.id;
+
+    const apiRes = await checkInEmployee(currentId);
     const timeStr = apiRes?.checkIn || new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 
     setEmployees((prev) =>
       prev.map((e) =>
-        e.name === "Meera Nair"
+        e.id === currentId
           ? { ...e, status: STATUS.PRESENT, checkIn: timeStr }
           : e
       )
@@ -60,8 +64,8 @@ export default function App() {
     // Add to attendance log table
     setAttendanceRecords((prev) => [
       {
-        employeeId: "OIMENA20240012",
-        name: "Meera Nair",
+        employeeId: currentId,
+        name: currentUser?.name || "Employee",
         date: new Date().toLocaleDateString("en-GB"),
         checkIn: timeStr,
         checkOut: null,
@@ -75,16 +79,19 @@ export default function App() {
   };
 
   const handleCheckOut = async () => {
-    const apiRes = await checkOutEmployee("OIMENA20240012");
+    const currentUser = role === "admin" ? employees[2] : employees[0];
+    const currentId = currentUser?.id;
+
+    const apiRes = await checkOutEmployee(currentId);
     const timeStr = apiRes?.checkOut || new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 
     setEmployees((prev) =>
-      prev.map((e) => (e.name === "Meera Nair" ? { ...e, checkOut: timeStr } : e))
+      prev.map((e) => (e.id === currentId ? { ...e, checkOut: timeStr } : e))
     );
 
     setAttendanceRecords((prev) =>
       prev.map((r, i) =>
-        i === 0 && r.employeeId === "OIMENA20240012"
+        r.employeeId === currentId && r.checkOut === null
           ? { ...r, checkOut: timeStr, workHours: `${apiRes?.workHours || 8.85} hrs`, extraHours: `${apiRes?.extraHours || 0.85} hrs` }
           : r
       )
@@ -130,7 +137,10 @@ export default function App() {
   };
 
   if (!role) {
-    return <SignIn onSignIn={setRole} />;
+    return <SignIn onSignIn={(r) => {
+      setRole(r);
+      setTab("dashboard");
+    }} />;
   }
 
   // Viewing a specific employee or self profile
@@ -168,6 +178,7 @@ export default function App() {
         <EmployeeInfo
           employee={targetEmp}
           isSelfView={isSelfProfile}
+          role={role}
           onBack={() => {
             setSelectedEmployee(null);
             setIsSelfProfile(false);
@@ -192,12 +203,24 @@ export default function App() {
         employee={role === "admin" ? employees[2] : employees[0]}
       />
 
-      {tab === "dashboard" && (
+      {tab === "dashboard" && role === "admin" && (
         <Dashboard
           role={role}
           employees={employees}
           onSelectEmployee={setSelectedEmployee}
           onAddEmployee={handleAddEmployee}
+        />
+      )}
+
+      {tab === "dashboard" && role === "employee" && (
+        <EmployeeDashboard
+          employee={employees.find((e) => e.name === "Meera Nair")}
+          onNavigate={setTab}
+          onLogOut={() => setRole(null)}
+          onOpenProfile={() => {
+            setSelectedEmployee(null);
+            setIsSelfProfile(true);
+          }}
         />
       )}
 
@@ -214,6 +237,7 @@ export default function App() {
       {tab === "timeoff" && (
         <TimeOff
           role={role}
+          employee={employees.find(e => e.name === "Meera Nair")}
           requests={leaveRequests}
           onApproveLeave={handleApproveLeave}
           onRejectLeave={handleRejectLeave}

@@ -1,9 +1,21 @@
 import { useState } from "react";
 import CheckInRunway from "../components/CheckInRunway";
+import CalendarPicker from "../components/CalendarPicker";
 
 export default function Attendance({ role, employees, attendanceRecords, onCheckIn, onCheckOut }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentMonth, setCurrentMonth] = useState("October 2025");
+  const [dateOffset, setDateOffset] = useState(0);
+  
+  const displayDate = new Date(2025, 9, 22 + dateOffset); // 9 is October
+  
+  const handleDateChange = (newDate) => {
+    // Calculate the day difference from the base date (22 Oct 2025)
+    const baseDate = new Date(2025, 9, 22);
+    // Use Math.round to avoid daylight savings issues
+    const diffTime = newDate.getTime() - baseDate.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    setDateOffset(diffDays);
+  };
 
   const filteredEmployees = employees.filter(
     (e) =>
@@ -15,78 +27,57 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
-      {/* Header with Month Navigation */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900">Attendance</h1>
-          <p className="text-xs text-slate-600 mt-0.5">
-            {role === "admin"
-              ? "All employees attendance log & working hours balance."
-              : "Your daily check-in runway and monthly log."}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1 text-xs">
-          <button
-            onClick={() => setCurrentMonth("September 2025")}
-            className="text-slate-500 hover:text-slate-900 p-0.5"
-          >
-            <i className="ti ti-chevron-left" aria-hidden="true"></i>
-          </button>
-          <span className="font-medium text-slate-800 font-mono px-1">{currentMonth}</span>
-          <button
-            onClick={() => setCurrentMonth("November 2025")}
-            className="text-slate-500 hover:text-slate-900 p-0.5"
-          >
-            <i className="ti ti-chevron-right" aria-hidden="true"></i>
-          </button>
-        </div>
-      </div>
-
+      {/* Role-Specific Views */}
       {role === "admin" ? (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div className="relative w-full sm:w-72">
-              <i className="ti ti-search absolute left-3 top-2.5 text-slate-400 text-sm" aria-hidden="true"></i>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-4 rounded-t-xl border border-slate-800">
+            <h1 className="text-xl font-bold text-slate-100">Attendance</h1>
+            <div className="relative w-full sm:w-80">
+              <img src="/assets/search.svg" alt="Search" className="absolute left-3 top-2.5 w-4 h-4 opacity-50" />
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search employee attendance..."
-                className="w-full border border-slate-200 rounded-md pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-teal-200 bg-white"
+                placeholder="Searchbar"
+                className="w-full border border-slate-700 bg-slate-800 rounded-md pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-slate-500"
               />
             </div>
           </div>
+          
+          <div className="flex items-center justify-between px-4 bg-slate-900 p-3 border-x border-b border-slate-800 -mt-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setDateOffset(prev => prev - 1)} className="bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-600 px-3 py-1 rounded transition-colors cursor-pointer flex items-center justify-center">
+                  <img src="/assets/chevron-left.svg" alt="Previous" className="w-4 h-4" />
+                </button>
+                <button onClick={() => setDateOffset(prev => prev + 1)} className="bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-600 px-3 py-1 rounded transition-colors cursor-pointer flex items-center justify-center">
+                  <img src="/assets/chevron-right.svg" alt="Next" className="w-4 h-4" />
+                </button>
+              </div>
+              <CalendarPicker value={displayDate} onChange={handleDateChange} />
+            </div>
+          </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-xs">
-            <table className="w-full text-xs">
+          <div className="rounded-lg border border-slate-800 bg-slate-900 overflow-hidden mt-0 rounded-t-none">
+            <table className="w-full text-xs text-left">
               <thead>
-                <tr className="bg-slate-50 text-left text-slate-600 border-b border-slate-100">
-                  <th className="px-4 py-3 font-semibold">Employee</th>
-                  <th className="px-4 py-3 font-semibold">Check in</th>
-                  <th className="px-4 py-3 font-semibold">Check out</th>
-                  <th className="px-4 py-3 font-semibold">Work hours</th>
+                <tr className="border-b border-slate-700 text-slate-400">
+                  <th className="px-4 py-3 font-semibold border-r border-slate-700 w-64">Emp</th>
+                  <th className="px-4 py-3 font-semibold border-r border-slate-700">Check In</th>
+                  <th className="px-4 py-3 font-semibold border-r border-slate-700">Check Out</th>
+                  <th className="px-4 py-3 font-semibold border-r border-slate-700">Work Hours</th>
                   <th className="px-4 py-3 font-semibold">Extra hours</th>
-                  <th className="px-4 py-3 font-semibold">Present</th>
-                  <th className="px-4 py-3 font-semibold">Leaves</th>
-                  <th className="px-4 py-3 font-semibold">Total Days</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-800">
                 {filteredEmployees.map((e, i) => {
                   const rec = attendanceRecords[i % attendanceRecords.length] || {};
                   return (
-                    <tr key={e.id} className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-medium text-slate-900">
-                        {e.name}
-                        <span className="block font-mono text-[10px] text-slate-400 font-normal">{e.id}</span>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-slate-600">{e.checkIn || rec.checkIn || "—"}</td>
-                      <td className="px-4 py-3 font-mono text-slate-600">{e.checkOut || rec.checkOut || "—"}</td>
-                      <td className="px-4 py-3 font-mono text-slate-600">{rec.workHours || "08:30"}</td>
-                      <td className="px-4 py-3 font-mono text-slate-600">{rec.extraHours || "00:00"}</td>
-                      <td className="px-4 py-3 text-slate-700 font-mono">20</td>
-                      <td className="px-4 py-3 text-slate-700 font-mono">2</td>
-                      <td className="px-4 py-3 text-slate-700 font-mono font-medium">22</td>
+                    <tr key={e.id} className="hover:bg-slate-800/50 text-slate-300">
+                      <td className="px-4 py-3 font-medium border-r border-slate-800">{e.name}</td>
+                      <td className="px-4 py-3 font-mono border-r border-slate-800">{e.checkIn || rec.checkIn || "10:00"}</td>
+                      <td className="px-4 py-3 font-mono border-r border-slate-800">{e.checkOut || rec.checkOut || "19:00"}</td>
+                      <td className="px-4 py-3 font-mono border-r border-slate-800">{rec.workHours || "09:00"}</td>
+                      <td className="px-4 py-3 font-mono">{rec.extraHours || "01:00"}</td>
                     </tr>
                   );
                 })}
@@ -95,50 +86,67 @@ export default function Attendance({ role, employees, attendanceRecords, onCheck
           </div>
         </div>
       ) : (
-        <div className="max-w-3xl mx-auto space-y-6">
-          <CheckInRunway
-            checkIn={meera.checkIn}
-            checkOut={meera.checkOut}
-            onCheckIn={onCheckIn}
-            onCheckOut={onCheckOut}
-          />
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg bg-slate-50 border border-slate-100 px-4 py-3">
-              <p className="text-xs text-slate-500">Working days</p>
-              <p className="text-xl font-bold font-mono text-slate-900 mt-1">22</p>
+        <div className="space-y-4">
+          <div className="bg-slate-900 p-4 rounded-t-xl border border-slate-800">
+            <h1 className="text-xl font-bold text-slate-100">Attendance</h1>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-4 px-4 bg-slate-900 p-3 border-x border-b border-slate-800 -mt-4">
+            <div className="flex items-center gap-2">
+              <button className="bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-600 px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer flex items-center justify-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <button className="bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-600 px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer flex items-center justify-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
             </div>
-            <div className="rounded-lg bg-teal-50/60 border border-teal-100 px-4 py-3">
-              <p className="text-xs text-teal-800 font-medium">Days Present</p>
-              <p className="text-xl font-bold font-mono text-teal-900 mt-1">20</p>
+            <button className="bg-slate-800 text-slate-300 border border-slate-600 px-6 py-1.5 rounded text-sm font-medium flex items-center gap-2">
+              Oct <i className="ti ti-chevron-down text-xs"></i>
+            </button>
+            <div className="bg-slate-800 text-slate-300 border border-slate-600 px-4 py-1.5 rounded text-sm font-medium flex items-center gap-2">
+              <span className="text-slate-400">Count of days present</span>
+              <span className="text-white font-mono">20</span>
             </div>
-            <div className="rounded-lg bg-slate-50 border border-slate-100 px-4 py-3">
-              <p className="text-xs text-slate-500">Approved Leaves</p>
-              <p className="text-xl font-bold font-mono text-slate-900 mt-1">2</p>
+            <div className="bg-slate-800 text-slate-300 border border-slate-600 px-4 py-1.5 rounded text-sm font-medium flex items-center gap-2">
+              <span className="text-slate-400">Leaves count</span>
+              <span className="text-white font-mono">2</span>
+            </div>
+            <div className="bg-slate-800 text-slate-300 border border-slate-600 px-4 py-1.5 rounded text-sm font-medium flex items-center gap-2">
+              <span className="text-slate-400">Total working days</span>
+              <span className="text-white font-mono">22</span>
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-            <table className="w-full text-xs">
+          <div className="rounded-lg border border-slate-800 bg-slate-900 overflow-hidden mt-0 rounded-t-none">
+            <table className="w-full text-xs text-left">
               <thead>
-                <tr className="bg-slate-50 text-left text-slate-600 border-b border-slate-100">
-                  <th className="px-4 py-2.5 font-semibold">Date</th>
-                  <th className="px-4 py-2.5 font-semibold">Check in</th>
-                  <th className="px-4 py-2.5 font-semibold">Check out</th>
-                  <th className="px-4 py-2.5 font-semibold">Work hours</th>
-                  <th className="px-4 py-2.5 font-semibold">Extra hours</th>
+                <tr className="border-b border-slate-700">
+                  <th className="px-4 py-3 font-semibold text-slate-300 border-r border-slate-700 w-48"></th>
+                  <th className="px-4 py-3 font-semibold text-slate-300" colSpan="4">October 2025</th>
+                </tr>
+                <tr className="border-b border-slate-700 text-slate-400">
+                  <th className="px-4 py-3 font-semibold border-r border-slate-700">Date</th>
+                  <th className="px-4 py-3 font-semibold border-r border-slate-700">Check In</th>
+                  <th className="px-4 py-3 font-semibold border-r border-slate-700">Check Out</th>
+                  <th className="px-4 py-3 font-semibold border-r border-slate-700">Work Hours</th>
+                  <th className="px-4 py-3 font-semibold">Extra hours</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {attendanceRecords.map((r) => (
-                  <tr key={r.date} className="hover:bg-slate-50/50">
-                    <td className="px-4 py-2.5 font-mono text-slate-800">{r.date}</td>
-                    <td className="px-4 py-2.5 font-mono text-slate-600">{r.checkIn || "—"}</td>
-                    <td className="px-4 py-2.5 font-mono text-slate-600">{r.checkOut || "—"}</td>
-                    <td className="px-4 py-2.5 font-mono text-slate-600">{r.workHours}</td>
-                    <td className="px-4 py-2.5 font-mono text-slate-600">{r.extraHours}</td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-slate-800">
+                {attendanceRecords.map((r, i) => {
+                  // Generate some consecutive dates for the mock data based on the index
+                  const day = 28 + i;
+                  const dateStr = `${day}/10/2025`;
+                  return (
+                    <tr key={i} className="hover:bg-slate-800/50 text-slate-300">
+                      <td className="px-4 py-3 font-mono border-r border-slate-800">{r.date || dateStr}</td>
+                      <td className="px-4 py-3 font-mono border-r border-slate-800">{r.checkIn || "10:00"}</td>
+                      <td className="px-4 py-3 font-mono border-r border-slate-800">{r.checkOut || "19:00"}</td>
+                      <td className="px-4 py-3 font-mono border-r border-slate-800">{r.workHours || "09:00"}</td>
+                      <td className="px-4 py-3 font-mono">{r.extraHours || "01:00"}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
