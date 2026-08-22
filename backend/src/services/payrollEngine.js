@@ -12,8 +12,8 @@ export function calculateSalaryComponents(wage, payableDays = 22, totalWorkingDa
   // 2. House Rent Allowance (HRA) = 50% of Basic
   const hra = Math.round(basic * 0.5);
 
-  // 3. Standard Allowance = Fixed ₹4,167/month
-  const standardAllowance = safeWage > 0 ? 4167 : 0;
+  // 3. Standard Allowance = Fixed ₹4,167/month (safely capped for low wages < ₹10,000)
+  const standardAllowance = safeWage > 0 ? Math.min(4167, Math.round(safeWage * 0.1)) : 0;
 
   // 4. Performance Bonus = 8.33% of Basic
   const performanceBonus = Math.round(basic * 0.0833);

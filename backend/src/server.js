@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import attendanceRoutes from "./routes/attendance.js";
 import salaryRoutes from "./routes/salary.js";
+import leaveRoutes from "./routes/leave.js";
 import { query } from "./db/index.js";
 
 dotenv.config();
@@ -27,7 +28,7 @@ app.get("/api/health", async (req, res) => {
     res.json({
       status: "online",
       service: "Dayflow HRMS Backend",
-      modules: ["P2: Attendance", "P4: Salary & Payroll Engine"],
+      modules: ["P2: Attendance", "P3: Leave / Time-Off", "P4: Salary & Payroll Engine"],
       database: dbRes.rows[0].database_name,
       dbTime: dbRes.rows[0].current_time,
       timestamp: new Date().toISOString(),
@@ -36,16 +37,17 @@ app.get("/api/health", async (req, res) => {
     res.json({
       status: "online (DB disconnected)",
       service: "Dayflow HRMS Backend",
-      modules: ["P2: Attendance", "P4: Salary & Payroll Engine"],
+      modules: ["P2: Attendance", "P3: Leave / Time-Off", "P4: Salary & Payroll Engine"],
       dbError: err.message,
       timestamp: new Date().toISOString(),
     });
   }
 });
 
-// Mount P2 & P4 Routes
+// Mount P2, P3 & P4 Routes
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/salary", salaryRoutes);
+app.use("/api/leave", leaveRoutes);
 
 // 404 Handler
 app.use((req, res) => {
@@ -61,5 +63,6 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Dayflow HRMS Backend running on http://localhost:${PORT}`);
   console.log(`📌 P2 Attendance Endpoints: http://localhost:${PORT}/api/attendance`);
+  console.log(`📌 P3 Leave Endpoints: http://localhost:${PORT}/api/leave`);
   console.log(`📌 P4 Payroll Engine Endpoints: http://localhost:${PORT}/api/salary`);
 });

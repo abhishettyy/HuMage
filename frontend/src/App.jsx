@@ -13,7 +13,13 @@ import {
   initialAttendanceRecords,
   STATUS,
 } from "./data/mockData";
-import { checkInEmployee, checkOutEmployee, updateBaseWage } from "./services/api";
+import {
+  checkInEmployee,
+  checkOutEmployee,
+  submitLeaveRequest,
+  approveLeaveRequest,
+  rejectLeaveRequest,
+} from "./services/api";
 
 export default function App() {
   const [role, setRole] = useState(null); // null | "admin" | "employee"
@@ -88,7 +94,8 @@ export default function App() {
     showToast("Checked Out", `Check-out recorded at ${timeStr}. Day landing completed.`);
   };
 
-  const handleApproveLeave = (id) => {
+  const handleApproveLeave = async (id) => {
+    await approveLeaveRequest(id);
     const req = leaveRequests.find((r) => r.id === id);
     setLeaveRequests((prev) =>
       prev.map((r) => (r.id === id ? { ...r, status: "Approved" } : r))
@@ -106,7 +113,8 @@ export default function App() {
     }
   };
 
-  const handleRejectLeave = (id) => {
+  const handleRejectLeave = async (id) => {
+    await rejectLeaveRequest(id);
     const req = leaveRequests.find((r) => r.id === id);
     setLeaveRequests((prev) =>
       prev.map((r) => (r.id === id ? { ...r, status: "Rejected" } : r))
@@ -116,7 +124,8 @@ export default function App() {
     }
   };
 
-  const handleSubmitLeave = (newReq) => {
+  const handleSubmitLeave = async (newReq) => {
+    await submitLeaveRequest(newReq);
     setLeaveRequests((prev) => [newReq, ...prev]);
     showToast("Leave Request Submitted", "Your request is pending Admin/HR review.");
   };

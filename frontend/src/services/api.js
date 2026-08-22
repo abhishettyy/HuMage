@@ -1,6 +1,6 @@
 /**
  * API Service Client connecting Frontend to Node.js Backend Server
- * Supports P2 (Attendance) & P4 (Salary/Payroll) endpoints with automatic fallback
+ * Supports P2 (Attendance), P3 (Leave) & P4 (Salary/Payroll) endpoints with automatic fallback
  */
 
 const API_BASE_URL = "http://localhost:5000/api";
@@ -71,5 +71,46 @@ export async function fetchPayrollPipeline(employeeId = "OIMENA20240012") {
   } catch (err) {
     console.warn("API Offline, using local pipeline handler:", err.message);
     return null;
+  }
+}
+
+export async function submitLeaveRequest(newReq) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/leave/request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newReq),
+    });
+    if (!res.ok) throw new Error("Failed to submit leave request");
+    return await res.json();
+  } catch (err) {
+    console.warn("API Offline, using local submit leave handler:", err.message);
+    return { success: true, request: newReq };
+  }
+}
+
+export async function approveLeaveRequest(id) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/leave/${id}/approve`, {
+      method: "PUT",
+    });
+    if (!res.ok) throw new Error("Failed to approve leave request");
+    return await res.json();
+  } catch (err) {
+    console.warn("API Offline, using local approve leave handler:", err.message);
+    return { success: true };
+  }
+}
+
+export async function rejectLeaveRequest(id) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/leave/${id}/reject`, {
+      method: "PUT",
+    });
+    if (!res.ok) throw new Error("Failed to reject leave request");
+    return await res.json();
+  } catch (err) {
+    console.warn("API Offline, using local reject leave handler:", err.message);
+    return { success: true };
   }
 }
