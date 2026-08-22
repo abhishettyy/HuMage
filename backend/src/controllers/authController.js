@@ -269,6 +269,43 @@ export const resetPassword = async (req, res) => {
 };
 
 /**
+ * @route   PUT /api/auth/change-password
+ * @desc    Change Password for Authenticated User
+ * @access  Private
+ */
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Invalid Input', message: 'Current password and new password are required.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Validation Error', message: 'New password must be at least 6 characters long.' });
+    }
+
+    const userRes = await query(`SELECT password_hash FROM users WHERE id = $1`, [req.user.userId]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Not Found', message: 'User not found.' });
+    }
+
+    const user = userRes.rows[0];
+    const isValid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Authentication Error', message: 'Incorrect current password.' });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [newHash, req.user.userId]);
+
+    res.json({ success: true, message: 'Password updated successfully!' });
+  } catch (error) {
+    console.error('❌ Change Password Error:', error);
+    res.status(500).json({ error: 'Server Error', message: 'Failed to change password.' });
+  }
+};
+
+/**
  * @route   GET /api/auth/me
  * @desc    Get Currently Authenticated User Session Info
  * @access  Private

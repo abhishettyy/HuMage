@@ -236,7 +236,7 @@ export const getEmployeeById = async (req, res) => {
       `SELECT e.*, u.email as work_email, u.role
        FROM employees e
        JOIN users u ON u.id = e.user_id
-       WHERE e.id::text = $1 OR UPPER(e.emp_code) = UPPER($1)`,
+       WHERE e.id::text = $1 OR UPPER(e.emp_code) = UPPER($1) OR e.user_id::text = $1`,
       [id]
     );
 
@@ -249,7 +249,7 @@ export const getEmployeeById = async (req, res) => {
 
     const emp = result.rows[0];
 
-    const isSelfOrAdmin = req.user.role === 'ADMIN' || req.user.employeeId === emp.id;
+    const isSelfOrAdmin = req.user.role === 'ADMIN' || req.user.employeeId === emp.id || req.user.userId === emp.user_id;
 
     const profileData = {
       id: emp.id,
@@ -306,14 +306,28 @@ export const getEmployeeById = async (req, res) => {
 
 /**
  * @route   PUT /api/employees/:id
- * @desc    Update Employee Profile Details
+ * @desc    Update Employee Profile Details (About, Skills, Certifications, Private Info & Bank Details)
  * @access  Private (Self or Admin)
  */
 export const updateEmployee = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (req.user.role !== 'ADMIN' && req.user.employeeId !== id) {
+    // Look up target employee by UUID, empCode, or user_id
+    const targetRes = await query(
+      `SELECT id, user_id, emp_code FROM employees WHERE id::text = $1 OR UPPER(emp_code) = UPPER($1) OR user_id::text = $1`,
+      [id]
+    );
+
+    if (targetRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Not Found', message: 'Employee record not found.' });
+    }
+
+    const targetEmp = targetRes.rows[0];
+    const isSelf = req.user.userId === targetEmp.user_id || req.user.employeeId === targetEmp.id || (req.user.loginId && req.user.loginId.toUpperCase() === targetEmp.emp_code.toUpperCase());
+    const isAdmin = req.user.role === 'ADMIN';
+
+    if (!isSelf && !isAdmin) {
       return res.status(403).json({
         error: 'Forbidden',
         message: 'You are only authorized to edit your own profile.'
@@ -345,22 +359,18 @@ export const updateEmployee = async (req, res) => {
          bank_name = COALESCE($15, bank_name),
          ifsc_code = COALESCE($16, ifsc_code),
          updated_at = NOW()
-       WHERE id::text = $17 OR UPPER(emp_code) = UPPER($17)
+       WHERE id = $17
        RETURNING *`,
       [
         phone, location, aboutText, skills, certifications,
         dob, residingAddress, personalEmail, gender, nationality, maritalStatus, panNo, uanNo,
         accountNumber, bankName, ifscCode,
-        id
+        targetEmp.id
       ]
     );
 
-    if (updateRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Not Found', message: 'Employee record not found.' });
-    }
-
     res.json({
-      message: 'Profile updated successfully',
+      message: 'Profile updated successfully in Supabase PostgreSQL',
       employee: updateRes.rows[0]
     });
 

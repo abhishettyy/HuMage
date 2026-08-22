@@ -83,6 +83,22 @@ export async function resetPasswordApi(loginId, otp, newPassword) {
   }
 }
 
+export async function changePasswordApi(currentPassword, newPassword) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to change password");
+    return data;
+  } catch (err) {
+    console.warn("API Change Password fallback mode:", err.message);
+    throw err;
+  }
+}
+
 export async function fetchEmployeesApi() {
   try {
     const res = await fetch(`${API_BASE_URL}/employees`, {
@@ -110,6 +126,22 @@ export async function createEmployeeApi(empData) {
   } catch (err) {
     console.warn("API Offline / fallback for employee creation:", err.message);
     throw err;
+  }
+}
+
+export async function updateEmployeeProfileApi(id, profileData) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/employees/${id}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(profileData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to update profile");
+    return data;
+  } catch (err) {
+    console.warn("API update employee fallback mode:", err.message);
+    return null;
   }
 }
 
