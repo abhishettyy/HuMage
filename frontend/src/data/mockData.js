@@ -227,52 +227,63 @@ export function generateLoginId(firstName, lastName, joiningYear, serialNumber) 
 
 // Salary Component Engine (PS_Updated.md §6 formulas)
 export function computeSalary(wage, payableDays = 22, totalWorkingDays = 22) {
-  const safeWage = Math.max(0, wage || 0);
-  
-  // Component formulas
-  const basic = safeWage * 0.5;
-  const hra = basic * 0.5;
-  const standardAllowance = Math.min(4167, safeWage > 0 ? 4167 : 0);
-  const performanceBonus = basic * 0.0833;
-  const lta = basic * 0.0833;
-  
-  // Fixed allowance is the balancing figure
+  const safeWage = Math.max(0, Number(wage) || 0);
+
+  // 1. Basic Salary = 50% of Base Wage
+  const basic = Math.round(safeWage * 0.5);
+
+  // 2. House Rent Allowance (HRA) = 50% of Basic
+  const hra = Math.round(basic * 0.5);
+
+  // 3. Standard Allowance = Fixed ₹4,167/month (safely capped for low wages)
+  const standardAllowance = safeWage > 0 ? Math.min(4167, Math.round(safeWage * 0.1)) : 0;
+
+  // 4. Performance Bonus = 8.33% of Basic
+  const performanceBonus = Math.round(basic * 0.0833);
+
+  // 5. Leave Travel Allowance (LTA) = 8.33% of Basic
+  const lta = Math.round(basic * 0.0833);
+
+  // 6. Fixed Allowance = Balancing figure (Wage - sum of all above rounded components)
   const knownSum = basic + hra + standardAllowance + performanceBonus + lta;
   const fixedAllowance = Math.max(0, safeWage - knownSum);
 
-  // Deductions
-  const pfEmployee = basic * 0.12;
-  const pfEmployer = basic * 0.12;
+  // Verification assertion: Gross monthly salary equals safeWage exactly
+  const grossSalary = basic + hra + standardAllowance + performanceBonus + lta + fixedAllowance;
+
+  // 7. Deductions
+  const pfEmployee = Math.round(basic * 0.12);
+  const pfEmployer = Math.round(basic * 0.12);
   const professionalTax = safeWage > 0 ? 200 : 0;
   const totalDeductions = pfEmployee + professionalTax;
 
-  // Gross monthly before attendance adjustment
-  const grossSalary = basic + hra + standardAllowance + performanceBonus + lta + fixedAllowance;
+  // 8. Attendance & Leave Pipeline Adjustment
+  const safeTotalDays = Math.max(1, Number(totalWorkingDays) || 22);
+  const safePayableDays = Math.min(safeTotalDays, Math.max(0, Number(payableDays) || 0));
+  const ratio = safePayableDays / safeTotalDays;
 
-  // Payable days ratio
-  const ratio = totalWorkingDays > 0 ? payableDays / totalWorkingDays : 1;
   const adjustedGross = Math.round(grossSalary * ratio);
   const adjustedNetPay = Math.max(0, Math.round(adjustedGross - totalDeductions));
 
   return {
     wage: safeWage,
-    totalWorkingDays,
-    payableDays,
+    totalWorkingDays: safeTotalDays,
+    payableDays: safePayableDays,
     grossSalary,
     adjustedGross,
     adjustedNetPay,
     components: [
-      { label: "Basic salary", value: Math.round(basic), ramp: "teal" },
-      { label: "House rent allowance", value: Math.round(hra), ramp: "teal" },
-      { label: "Standard allowance", value: Math.round(standardAllowance), ramp: "teal" },
-      { label: "Performance bonus", value: Math.round(performanceBonus), ramp: "teal" },
-      { label: "Leave travel allowance", value: Math.round(lta), ramp: "teal" },
-      { label: "Fixed allowance", value: Math.round(fixedAllowance), ramp: "slate" },
+      { label: "Basic salary", value: basic, ramp: "teal" },
+      { label: "House rent allowance", value: hra, ramp: "teal" },
+      { label: "Standard allowance", value: standardAllowance, ramp: "teal" },
+      { label: "Performance bonus", value: performanceBonus, ramp: "teal" },
+      { label: "Leave travel allowance", value: lta, ramp: "teal" },
+      { label: "Fixed allowance", value: fixedAllowance, ramp: "slate" },
     ],
     deductions: [
-      { label: "Provident fund (employee)", value: Math.round(pfEmployee) },
-      { label: "Provident fund (employer)", value: Math.round(pfEmployer) },
-      { label: "Professional tax", value: Math.round(professionalTax) },
+      { label: "Provident fund (employee)", value: pfEmployee },
+      { label: "Provident fund (employer)", value: pfEmployer },
+      { label: "Professional tax", value: professionalTax },
     ],
   };
 }

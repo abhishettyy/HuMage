@@ -30,8 +30,12 @@ out/
 *.sw?
 .DS_Store
 
-# Local env files
+# Local env files & secret keys
 .env
+.env.*
+*.env
+env1
+**/backend/.env
 *.env
 .env*
 .env.local

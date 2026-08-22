@@ -2,6 +2,7 @@ import { useState } from "react";
 import SalaryManifestBar from "../components/SalaryManifestBar";
 import PayslipModal from "../components/PayslipModal";
 import { computeSalary } from "../data/mockData";
+import { updateBaseWage } from "../services/api";
 
 export default function Salary({ role, employees, leaveRequests }) {
   const [selectedId, setSelectedId] = useState(employees[0]?.id || "OIMENA20240012");
@@ -9,6 +10,12 @@ export default function Salary({ role, employees, leaveRequests }) {
   const [showPayslipModal, setShowPayslipModal] = useState(false);
 
   const currentEmployee = employees.find((e) => e.id === selectedId) || employees[0];
+
+  const handleWageChange = (newWage) => {
+    setWage(newWage);
+    // Asynchronously sync live wage with Node.js backend
+    updateBaseWage(selectedId, newWage).catch(() => {});
+  };
 
   // Calculate approved leaves for selected employee
   const approvedLeaves = leaveRequests.filter(
@@ -35,7 +42,7 @@ export default function Salary({ role, employees, leaveRequests }) {
 
         <button
           onClick={() => setShowPayslipModal(true)}
-          className="text-xs font-semibold px-4 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white shadow-sm flex items-center gap-2 transition-colors"
+          className="text-xs font-semibold px-4 py-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white shadow-sm flex items-center gap-2 transition-colors cursor-pointer"
         >
           <i className="ti ti-file-certificate text-base" aria-hidden="true"></i> Generate Payslip
         </button>
@@ -52,7 +59,7 @@ export default function Salary({ role, employees, leaveRequests }) {
                 const id = e.target.value;
                 setSelectedId(id);
                 const emp = employees.find((emp) => emp.id === id);
-                if (emp) setWage(emp.wage);
+                if (emp) handleWageChange(emp.wage);
               }}
               className="w-full border border-slate-200 rounded-md px-3 py-2 text-xs bg-white focus:ring-2 focus:ring-teal-200"
             >
@@ -70,7 +77,7 @@ export default function Salary({ role, employees, leaveRequests }) {
               <input
                 type="number"
                 value={wage}
-                onChange={(e) => setWage(Number(e.target.value) || 0)}
+                onChange={(e) => handleWageChange(Number(e.target.value) || 0)}
                 className="w-full border border-slate-200 rounded-md px-3 py-2 text-xs font-mono font-bold text-slate-900 bg-white"
               />
             </div>
@@ -89,7 +96,7 @@ export default function Salary({ role, employees, leaveRequests }) {
             max={150000}
             step={2500}
             value={wage}
-            onChange={(e) => setWage(Number(e.target.value))}
+            onChange={(e) => handleWageChange(Number(e.target.value))}
             className="w-full accent-teal-600 cursor-pointer"
           />
         </div>
