@@ -1,0 +1,27 @@
+{
+  "name": "humage",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/abhishettyy/HuMage#readme",
+  "bugs": {
+    "url": "https://github.com/abhishettyy/HuMage/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abhishettyy/HuMage.git"
+  },
+  "license": "ISC",
+  "author": "HuMage",
+  "type": "commonjs",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}

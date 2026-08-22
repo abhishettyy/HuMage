@@ -1,5 +1,5 @@
 {
-  "name": "dayflow-hrms-backend",
+  "name": "dayflow-backend",
   "version": "1.0.0",
   "description": "Node.js Express backend for Dayflow HRMS P2 (Attendance) & P4 (Payroll Engine)",
   "main": "src/server.js",
