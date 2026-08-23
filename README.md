@@ -4,8 +4,7 @@
 > *A role-based, multi-tenant SaaS HRMS built around an interconnected operational pipeline.*
 
 > [!NOTE]
-> 📽️ **Demo Video Links**: [Watch on YouTube](https://youtu.be/jBIwPuSa_2U) | 📁 [Watch on Google Drive](https://drive.google.com/file/d/13TPvggYmIqfp8vyqW_DxN-eVISvfLbQ4/view?usp=sharing)
-*(Note: The previous YouTube link was removed. Please use this link for now until the original link is restored.)*
+> 📽️ **Official Demo Video**: [Watch Demo Video on YouTube](https://youtu.be/uETRaHfmxHU) | 📁 [Google Drive Mirror](https://drive.google.com/file/d/13TPvggYmIqfp8vyqW_DxN-eVISvfLbQ4/view?usp=sharing)
 
 ---
 
